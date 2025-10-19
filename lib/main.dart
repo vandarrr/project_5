@@ -5,13 +5,15 @@ import '/ui/login.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  var token = await UserInfo().getToken();
-  print(token);
+
+  // 🔹 Kalau ingin selalu mulai dari login, abaikan token
+  // var token = await UserInfo().getToken(); // nonaktifkan baris ini
+
   runApp(
     MaterialApp(
-      title: "Klinik APP",
+      title: "LokerIn APP", // sekalian ganti nama app
       debugShowCheckedModeBanner: false,
-      home: token == null ? Login() : Beranda(),
+      home: const Login(), // 🔹 langsung ke LoginPage
     ),
   );
 }
