@@ -67,7 +67,7 @@ class Beranda extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             FadeInDown(
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1),
               delay: const Duration(milliseconds: 600),
               child: Row(
                 children: [

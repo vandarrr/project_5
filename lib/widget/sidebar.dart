@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../ui/beranda.dart';
 import '../ui/login.dart';
 import '../ui/poli_page.dart';
+import '../ui/lamaran_page.dart'; // ✅ import LamaranPage
 
 class Sidebar extends StatelessWidget {
   const Sidebar({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               Color(0xFFEEF2F3), // abu muda
@@ -24,7 +25,7 @@ class Sidebar extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            UserAccountsDrawerHeader(
+            const UserAccountsDrawerHeader(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF6C63FF), Color(0xFF7C8CFB)],
@@ -60,11 +61,21 @@ class Sidebar extends StatelessWidget {
             ),
             _buildMenuItem(
               context,
-              icon: Icons.chat_bubble_outline,
+              icon: Icons.chat,
               text: "Chat",
               page: PoliPage(),
             ),
-            _buildMenuItem(context, icon: Icons.history, text: "Riwayat"),
+
+            // ✅ Klik "Lamaran" -> ke LamaranPage
+            _buildMenuItem(
+              context,
+              icon: Icons.bookmark,
+              text: "My Activity",
+              page: LamaranPage(
+                selectedTab: "applied",
+              ), // otomatis ke tab Applied
+            ),
+
             _buildMenuItem(
               context,
               icon: Icons.account_circle_outlined,
@@ -77,8 +88,8 @@ class Sidebar extends StatelessWidget {
               context,
               icon: Icons.logout_rounded,
               text: "Keluar",
-              textColor: Colors.red.shade700,
-              iconColor: Colors.red.shade700,
+              textColor: Colors.red,
+              iconColor: Colors.red,
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -116,6 +127,7 @@ class Sidebar extends StatelessWidget {
           onTap ??
           () {
             if (page != null) {
+              Navigator.pop(context); // ✅ tutup drawer dulu
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => page),

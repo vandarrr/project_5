@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../service/login_service.dart';
 import '/ui/beranda.dart';
+import '/ui/register_page.dart'; // ✅ tambahkan ini agar bisa navigasi ke RegisterPage
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -26,7 +27,7 @@ class _Login extends State<Login> {
             children: [
               const SizedBox(height: 30),
 
-              // 🔹 Logo LokerIn (versi lebar)
+              // 🔹 Logo LokerIn
               Center(
                 child: Image.asset(
                   'assets/logo.png',
@@ -161,7 +162,6 @@ class _Login extends State<Login> {
                       const SnackBar(content: Text('Login berhasil!')),
                     );
 
-                    // 🔹 Transisi fade ke Beranda
                     Navigator.of(context).pushReplacement(
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -173,9 +173,7 @@ class _Login extends State<Login> {
                                 child: child,
                               );
                             },
-                        transitionDuration: const Duration(
-                          seconds: 2,
-                        ), // durasi fade
+                        transitionDuration: const Duration(seconds: 2),
                       ),
                     );
                   } else {
@@ -195,6 +193,34 @@ class _Login extends State<Login> {
                   'Log in',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 🔹 Tambahan teks "Belum punya akun? Register"
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Belum punya akun? "),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Register",
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 30),

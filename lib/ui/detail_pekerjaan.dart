@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pertanyaan_rekruter.dart'; // pastikan path sesuai
 
 class DetailPekerjaan extends StatelessWidget {
   final Map job;
@@ -23,7 +24,7 @@ class DetailPekerjaan extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Bagian atas seperti gambar 1
+            // 🔹 Bagian atas
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -32,7 +33,7 @@ class DetailPekerjaan extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 6,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -162,7 +163,7 @@ class DetailPekerjaan extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // 🔹 Bagian bawah seperti gambar 2 (Deskripsi pekerjaan)
+            // 🔹 Deskripsi pekerjaan
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -171,7 +172,7 @@ class DetailPekerjaan extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 6,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -222,7 +223,17 @@ class DetailPekerjaan extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            // aksi ketika klik "Lamar Sekarang"
+            // ✅ Kirim data pekerjaan ke halaman pertanyaan rekruter
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PertanyaanRekruter(
+                  posisi: job['title']!,
+                  perusahaan: job['company']!,
+                  lokasi: job['location']!,
+                ),
+              ),
+            );
           },
           child: const Text(
             'Lamar Sekarang',

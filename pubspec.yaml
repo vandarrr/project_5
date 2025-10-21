@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.2
 
   animate_do: ^3.1.2
   cupertino_icons: ^1.0.8
@@ -38,3 +39,6 @@ flutter:
     - assets/shopee.png
     - assets/tokopedia.png
     - assets/meta.png
+    - assets/careerr.png
+    - assets/google1.png
+    - assets/facebook1.png
