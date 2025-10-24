@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../ui/beranda.dart';
 import '../ui/login.dart';
-import '../ui/poli_page.dart';
 import '../ui/lamaran_page.dart'; // ✅ import LamaranPage
 
 class Sidebar extends StatelessWidget {
@@ -59,12 +58,7 @@ class Sidebar extends StatelessWidget {
               text: "Beranda",
               page: Beranda(),
             ),
-            _buildMenuItem(
-              context,
-              icon: Icons.chat,
-              text: "Chat",
-              page: PoliPage(),
-            ),
+            _buildMenuItem(context, icon: Icons.chat, text: "Chat"),
 
             // ✅ Klik "Lamaran" -> ke LamaranPage
             _buildMenuItem(

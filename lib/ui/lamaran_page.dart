@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../helpers/lamaran_provider.dart';
+import '../helpers/saved_provider.dart'; // ✅ Tambahkan import ini
 import '../model/lamaran.dart';
 
 class LamaranPage extends StatefulWidget {
-  final String selectedTab; // ✅ Tambahan parameter
+  final String selectedTab; // ✅ Parameter untuk tab default
   const LamaranPage({Key? key, this.selectedTab = "saved"}) : super(key: key);
 
   @override
@@ -19,7 +20,7 @@ class _LamaranPageState extends State<LamaranPage>
   void initState() {
     super.initState();
 
-    // ✅ Set tab default berdasarkan parameter selectedTab
+    // ✅ Set tab default berdasarkan parameter
     int initialIndex = widget.selectedTab == "applied" ? 1 : 0;
     _tabController = TabController(
       length: 2,
@@ -36,6 +37,9 @@ class _LamaranPageState extends State<LamaranPage>
       backgroundColor: const Color(0xFFF6F8FB),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A1D56),
+        iconTheme: const IconThemeData(
+          color: Colors.white, // 🔥 Warna ikon back putih
+        ),
         title: const Text(
           'My Activity',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -43,6 +47,7 @@ class _LamaranPageState extends State<LamaranPage>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
+          indicatorWeight: 3.0, // 🔥 Indikator lebih tebal & modern
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           tabs: const [
@@ -54,12 +59,17 @@ class _LamaranPageState extends State<LamaranPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // TAB SAVED
+          // ✅ TAB: Saved
           _buildSavedTab(),
 
-          // TAB APPLIED (Lamaran yang sudah dikirim)
+          // ✅ TAB: Applied (Lamaran yang sudah dikirim)
           lamaranList.isEmpty
-              ? const Center(child: Text('Belum ada lamaran yang dikirim.'))
+              ? const Center(
+                  child: Text(
+                    'Belum ada lamaran yang dikirim.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: lamaranList.length,
@@ -73,15 +83,47 @@ class _LamaranPageState extends State<LamaranPage>
     );
   }
 
+  /// ✅ Tampilan tab "Saved"
   Widget _buildSavedTab() {
-    return Center(
-      child: Text(
-        'Belum ada pekerjaan yang disimpan.',
-        style: TextStyle(color: Colors.grey.shade600),
-      ),
+    final savedList = Provider.of<SavedProvider>(context).savedList;
+
+    if (savedList.isEmpty) {
+      return Center(
+        child: Text(
+          'Belum ada pekerjaan yang disimpan.',
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: savedList.length,
+      itemBuilder: (context, index) {
+        final lamaran = savedList[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+          child: ListTile(
+            title: Text(
+              lamaran.posisi,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0A1D56),
+              ),
+            ),
+            subtitle: Text(lamaran.perusahaan),
+            trailing: const Icon(Icons.bookmark, color: Colors.pink),
+          ),
+        );
+      },
     );
   }
 
+  /// ✅ Kartu lamaran di tab "Applied"
   Widget _buildLamaranCard(Lamaran lamaran) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

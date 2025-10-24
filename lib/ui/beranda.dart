@@ -2,12 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import '../widget/sidebar.dart';
 import '/ui/detail_pekerjaan.dart';
+import 'package:provider/provider.dart';
+import '../helpers/saved_provider.dart';
+import '../model/lamaran.dart';
 
-class Beranda extends StatelessWidget {
+class Beranda extends StatefulWidget {
   const Beranda({Key? key}) : super(key: key);
 
   @override
+  State<Beranda> createState() => _BerandaState();
+}
+
+class _BerandaState extends State<Beranda> {
+  String _searchQuery = ''; // 🔍 teks pencarian
+  String _selectedCategory = 'Recommended'; // 🔘 kategori aktif
+
+  @override
   Widget build(BuildContext context) {
+    final savedProvider = Provider.of<SavedProvider>(context);
+
+    // 🔹 Filter pencarian
+    List<Map<String, String>> filteredJobs = _jobs.where((job) {
+      final title = job['title']!.toLowerCase();
+      final company = job['company']!.toLowerCase();
+      final location = job['location']!.toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return title.contains(query) ||
+          company.contains(query) ||
+          location.contains(query);
+    }).toList();
+
+    // 🔹 Filter kategori (Recommended / All / New to you)
+    if (_selectedCategory == 'Recommended') {
+      filteredJobs = filteredJobs.take(5).toList();
+    } else if (_selectedCategory == 'New to you') {
+      // Ambil 3 pekerjaan terbaru (berdasarkan waktu terpendek)
+      filteredJobs.sort(
+        (a, b) => _convertTimeToMinutes(
+          a['time']!,
+        ).compareTo(_convertTimeToMinutes(b['time']!)),
+      );
+      filteredJobs = filteredJobs.take(3).toList();
+    }
+
     return Scaffold(
       drawer: const Sidebar(),
       backgroundColor: const Color(0xFFF5F6FA),
@@ -38,10 +75,17 @@ class Beranda extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            // 🔍 Search bar
             FadeInDown(
               duration: const Duration(seconds: 2),
               delay: const Duration(milliseconds: 300),
               child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: 'Start your job search',
                   prefixIcon: const Icon(
@@ -66,18 +110,20 @@ class Beranda extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+
+            // 🔘 Kategori Filter
             FadeInDown(
               duration: const Duration(seconds: 1),
               delay: const Duration(milliseconds: 600),
               child: Row(
                 children: [
-                  _buildCategoryChip('Recommended', true),
+                  _buildCategoryChip('Recommended'),
                   const SizedBox(width: 8),
-                  _buildCategoryChip('All', false),
+                  _buildCategoryChip('All'),
                   const SizedBox(width: 8),
                   Stack(
                     children: [
-                      _buildCategoryChip('New to you', false),
+                      _buildCategoryChip('New to you'),
                       Positioned(
                         right: 8,
                         top: 4,
@@ -88,7 +134,7 @@ class Beranda extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: const Text(
-                            '100',
+                            '3',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.white,
@@ -104,32 +150,55 @@ class Beranda extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🔹 Job Cards dengan GestureDetector
-            ...List.generate(_jobs.length, (index) {
-              final job = _jobs[index];
-              return FadeInUp(
-                duration: const Duration(seconds: 2),
-                delay: Duration(milliseconds: 900 + (index * 300)),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailPekerjaan(job: job),
-                      ),
-                    );
-                  },
-                  child: _buildJobCard(
-                    logo: job['logo']!,
-                    title: job['title']!,
-                    company: job['company']!,
-                    location: job['location']!,
-                    time: job['time']!,
+            // 🔹 Job list
+            if (filteredJobs.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Text(
+                    'No jobs found 😕',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                 ),
-              );
-            }),
+              )
+            else
+              ...List.generate(filteredJobs.length, (index) {
+                final job = filteredJobs[index];
+                final lamaran = Lamaran(
+                  posisi: job['title']!,
+                  perusahaan: job['company']!,
+                  lokasi: job['location']!,
+                  tanggal: DateTime.now(),
+                );
 
+                final isSaved = savedProvider.isSaved(lamaran);
+
+                return FadeInUp(
+                  duration: const Duration(seconds: 2),
+                  delay: Duration(milliseconds: 900 + (index * 300)),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailPekerjaan(job: job),
+                        ),
+                      );
+                    },
+                    child: _buildJobCard(
+                      logo: job['logo']!,
+                      title: job['title']!,
+                      company: job['company']!,
+                      location: job['location']!,
+                      time: job['time']!,
+                      isSaved: isSaved,
+                      onSave: () {
+                        savedProvider.toggleSave(lamaran);
+                      },
+                    ),
+                  ),
+                );
+              }),
             const SizedBox(height: 40),
           ],
         ),
@@ -137,36 +206,48 @@ class Beranda extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(String text, bool selected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFFF5C8D) : Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 3,
-            offset: const Offset(0, 2),
+  /// 🔘 Tombol kategori
+  Widget _buildCategoryChip(String text) {
+    final selected = _selectedCategory == text;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = text;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF5C8D) : Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 3,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF0A1D56),
+            fontWeight: FontWeight.w500,
           ),
-        ],
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: selected ? Colors.white : const Color(0xFF0A1D56),
-          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
+  /// 🧾 Kartu pekerjaan
   Widget _buildJobCard({
     required String logo,
     required String title,
     required String company,
     required String location,
     required String time,
+    required bool isSaved,
+    required VoidCallback onSave,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -210,10 +291,10 @@ class Beranda extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.bookmark_border,
-                  color: Color(0xFFFF5C8D),
+                onPressed: onSave,
+                icon: Icon(
+                  isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  color: isSaved ? Colors.pink : const Color(0xFFFF5C8D),
                 ),
               ),
             ],
@@ -225,9 +306,9 @@ class Beranda extends StatelessWidget {
               color: const Color(0xFFFFE3EC),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
-              'New to you',
-              style: TextStyle(fontSize: 12, color: Color(0xFFFF5C8D)),
+            child: Text(
+              _selectedCategory == 'New to you' ? 'Just for you' : 'New to you',
+              style: const TextStyle(fontSize: 12, color: Color(0xFFFF5C8D)),
             ),
           ),
           const SizedBox(height: 6),
@@ -238,9 +319,21 @@ class Beranda extends StatelessWidget {
       ),
     );
   }
+
+  /// ⏱️ Konversi waktu seperti "3h ago", "2d ago", "1w ago" ke menit
+  int _convertTimeToMinutes(String time) {
+    if (time.contains('h')) {
+      return int.parse(time.replaceAll('h ago', '')) * 60;
+    } else if (time.contains('d')) {
+      return int.parse(time.replaceAll('d ago', '')) * 24 * 60;
+    } else if (time.contains('w')) {
+      return int.parse(time.replaceAll('w ago', '')) * 7 * 24 * 60;
+    }
+    return 999999;
+  }
 }
 
-// 🔹 Daftar 10 pekerjaan (dengan deskripsi berbeda)
+// 🔹 Daftar pekerjaan (tidak diubah)
 final List<Map<String, String>> _jobs = [
   {
     'logo': 'assets/trafindo.png',
