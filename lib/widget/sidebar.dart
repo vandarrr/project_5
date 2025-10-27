@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../ui/beranda.dart';
 import '../ui/login.dart';
-import '../ui/lamaran_page.dart'; // ✅ import LamaranPage
+import '../ui/lamaran_page.dart';
+import '../ui/profil_page.dart'; // ✅ import halaman profil
 
 class Sidebar extends StatelessWidget {
   const Sidebar({Key? key}) : super(key: key);
@@ -51,33 +52,36 @@ class Sidebar extends StatelessWidget {
               ),
             ),
 
-            // Menu Items
+            // 🔹 Menu Beranda
             _buildMenuItem(
               context,
               icon: Icons.home,
               text: "Beranda",
-              page: Beranda(),
+              page: const Beranda(),
             ),
-            _buildMenuItem(context, icon: Icons.chat, text: "Chat"),
 
-            // ✅ Klik "Lamaran" -> ke LamaranPage
+            // 🔹 Career
+            _buildMenuItem(context, icon: Icons.work, text: "Career"),
+
+            // 🔹 My Activity
             _buildMenuItem(
               context,
               icon: Icons.bookmark,
               text: "My Activity",
-              page: LamaranPage(
-                selectedTab: "applied",
-              ), // otomatis ke tab Applied
+              page: LamaranPage(selectedTab: "applied"),
             ),
 
+            // 🔹 Profile -> ProfilPage
             _buildMenuItem(
               context,
               icon: Icons.account_circle_outlined,
               text: "Profile",
+              page: const ProfilPage(), // ✅ arahkan ke halaman profil
             ),
 
             const Divider(thickness: 1, indent: 15, endIndent: 15),
 
+            // 🔹 Logout
             _buildMenuItem(
               context,
               icon: Icons.logout_rounded,
@@ -87,7 +91,7 @@ class Sidebar extends StatelessWidget {
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => Login()),
+                  MaterialPageRoute(builder: (context) => const Login()),
                   (Route<dynamic> route) => false,
                 );
               },
@@ -98,6 +102,7 @@ class Sidebar extends StatelessWidget {
     );
   }
 
+  // 🔸 Builder Item Sidebar
   Widget _buildMenuItem(
     BuildContext context, {
     required IconData icon,
@@ -121,7 +126,7 @@ class Sidebar extends StatelessWidget {
           onTap ??
           () {
             if (page != null) {
-              Navigator.pop(context); // ✅ tutup drawer dulu
+              Navigator.pop(context); // ✅ Tutup sidebar
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => page),

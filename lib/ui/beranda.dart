@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 import '../widget/sidebar.dart';
 import '/ui/detail_pekerjaan.dart';
-import 'package:provider/provider.dart';
 import '../helpers/saved_provider.dart';
 import '../model/lamaran.dart';
 
@@ -14,33 +14,29 @@ class Beranda extends StatefulWidget {
 }
 
 class _BerandaState extends State<Beranda> {
-  String _searchQuery = ''; // 🔍 teks pencarian
-  String _selectedCategory = 'Recommended'; // 🔘 kategori aktif
+  String _searchQuery = '';
+  String _selectedCategory = 'Recommended';
 
   @override
   Widget build(BuildContext context) {
     final savedProvider = Provider.of<SavedProvider>(context);
 
-    // 🔹 Filter pencarian
+    // 🔹 Filter berdasarkan pencarian
     List<Map<String, String>> filteredJobs = _jobs.where((job) {
-      final title = job['title']!.toLowerCase();
-      final company = job['company']!.toLowerCase();
-      final location = job['location']!.toLowerCase();
       final query = _searchQuery.toLowerCase();
-      return title.contains(query) ||
-          company.contains(query) ||
-          location.contains(query);
+      return job['title']!.toLowerCase().contains(query) ||
+          job['company']!.toLowerCase().contains(query) ||
+          job['location']!.toLowerCase().contains(query);
     }).toList();
 
-    // 🔹 Filter kategori (Recommended / All / New to you)
+    // 🔹 Filter berdasarkan kategori
     if (_selectedCategory == 'Recommended') {
       filteredJobs = filteredJobs.take(5).toList();
     } else if (_selectedCategory == 'New to you') {
-      // Ambil 3 pekerjaan terbaru (berdasarkan waktu terpendek)
       filteredJobs.sort(
-        (a, b) => _convertTimeToMinutes(
+        (a, b) => _parseTimeToHours(
           a['time']!,
-        ).compareTo(_convertTimeToMinutes(b['time']!)),
+        ).compareTo(_parseTimeToHours(b['time']!)),
       );
       filteredJobs = filteredJobs.take(3).toList();
     }
@@ -64,7 +60,7 @@ class _BerandaState extends State<Beranda> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FadeInDown(
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1),
               child: const Text(
                 'Good evening, Rizky 👋',
                 style: TextStyle(
@@ -78,13 +74,11 @@ class _BerandaState extends State<Beranda> {
 
             // 🔍 Search bar
             FadeInDown(
-              duration: const Duration(seconds: 2),
+              duration: const Duration(seconds: 1),
               delay: const Duration(milliseconds: 300),
               child: TextField(
                 onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
+                  setState(() => _searchQuery = value);
                 },
                 decoration: InputDecoration(
                   hintText: 'Start your job search',
@@ -111,7 +105,7 @@ class _BerandaState extends State<Beranda> {
             ),
             const SizedBox(height: 20),
 
-            // 🔘 Kategori Filter
+            // 🔹 Kategori: Recommended / All / New to you
             FadeInDown(
               duration: const Duration(seconds: 1),
               delay: const Duration(milliseconds: 600),
@@ -150,7 +144,7 @@ class _BerandaState extends State<Beranda> {
             ),
             const SizedBox(height: 20),
 
-            // 🔹 Job list
+            // 🔹 Daftar pekerjaan
             if (filteredJobs.isEmpty)
               const Center(
                 child: Padding(
@@ -174,7 +168,7 @@ class _BerandaState extends State<Beranda> {
                 final isSaved = savedProvider.isSaved(lamaran);
 
                 return FadeInUp(
-                  duration: const Duration(seconds: 2),
+                  duration: const Duration(seconds: 1),
                   delay: Duration(milliseconds: 900 + (index * 300)),
                   child: GestureDetector(
                     onTap: () {
@@ -192,13 +186,12 @@ class _BerandaState extends State<Beranda> {
                       location: job['location']!,
                       time: job['time']!,
                       isSaved: isSaved,
-                      onSave: () {
-                        savedProvider.toggleSave(lamaran);
-                      },
+                      onSave: () => savedProvider.toggleSave(lamaran),
                     ),
                   ),
                 );
               }),
+
             const SizedBox(height: 40),
           ],
         ),
@@ -206,15 +199,11 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
-  /// 🔘 Tombol kategori
+  /// 🔹 Widget kategori (chip)
   Widget _buildCategoryChip(String text) {
     final selected = _selectedCategory == text;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCategory = text;
-        });
-      },
+      onTap: () => setState(() => _selectedCategory = text),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
@@ -239,7 +228,7 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
-  /// 🧾 Kartu pekerjaan
+  /// 🔹 Widget kartu pekerjaan
   Widget _buildJobCard({
     required String logo,
     required String title,
@@ -306,13 +295,16 @@ class _BerandaState extends State<Beranda> {
               color: const Color(0xFFFFE3EC),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(
-              _selectedCategory == 'New to you' ? 'Just for you' : 'New to you',
-              style: const TextStyle(fontSize: 12, color: Color(0xFFFF5C8D)),
+            child: const Text(
+              'New to you',
+              style: TextStyle(fontSize: 12, color: Color(0xFFFF5C8D)),
             ),
           ),
           const SizedBox(height: 6),
-          Text('Full time • $location', style: const TextStyle(fontSize: 13)),
+          Text(
+            'Full time • $location',
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
+          ),
           const SizedBox(height: 8),
           Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         ],
@@ -320,20 +312,20 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
-  /// ⏱️ Konversi waktu seperti "3h ago", "2d ago", "1w ago" ke menit
-  int _convertTimeToMinutes(String time) {
+  /// 🔹 Konversi waktu ke jam (untuk sorting)
+  int _parseTimeToHours(String time) {
     if (time.contains('h')) {
-      return int.parse(time.replaceAll('h ago', '')) * 60;
+      return int.tryParse(time.replaceAll('h ago', '').trim()) ?? 0;
     } else if (time.contains('d')) {
-      return int.parse(time.replaceAll('d ago', '')) * 24 * 60;
+      return (int.tryParse(time.replaceAll('d ago', '').trim()) ?? 0) * 24;
     } else if (time.contains('w')) {
-      return int.parse(time.replaceAll('w ago', '')) * 7 * 24 * 60;
+      return (int.tryParse(time.replaceAll('w ago', '').trim()) ?? 0) * 168;
     }
-    return 999999;
+    return 9999;
   }
 }
 
-// 🔹 Daftar pekerjaan (tidak diubah)
+// 🔹 Daftar pekerjaan
 final List<Map<String, String>> _jobs = [
   {
     'logo': 'assets/trafindo.png',
