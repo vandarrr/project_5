@@ -11,11 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.1.2
-
   animate_do: ^3.1.2
   cupertino_icons: ^1.0.8
   dio: ^5.6.0
   shared_preferences: ^2.3.2
+
+  # ✅ Tambahkan ini untuk fitur unggah file CV/dokumen
+  file_picker: ^8.0.0
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +44,4 @@ flutter:
     - assets/careerr.png
     - assets/google1.png
     - assets/facebook1.png
+    - assets/profile.png
