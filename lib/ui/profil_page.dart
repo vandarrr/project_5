@@ -37,7 +37,7 @@ class _ProfilPageState extends State<ProfilPage> {
 
   List<Map<String, String>> pengalamanKerja = [];
   List<Map<String, String>> riwayatPendidikan = [];
-  List<String> kemampuanTeknis = [];
+  List<Map<String, String>> kemampuanTeknis = []; // ✅ diperbarui
   List<Map<String, String>> kemampuanBahasa = [];
 
   // ===================== INIT LOAD FROM DATABASE =====================
@@ -88,9 +88,21 @@ class _ProfilPageState extends State<ProfilPage> {
           )
           .toList();
 
+      // ✅ kemampuan teknis sekarang berbentuk map, bukan string
       kemampuanTeknis = tek
-          .map((e) => (e['nama'] ?? '').toString())
-          .where((x) => x.isNotEmpty)
+          .map<Map<String, String>>(
+            (e) => {
+              'kategori': (e['kategori'] ?? '').toString(),
+              'nama': (e['nama'] ?? '').toString(),
+              'tingkat': (e['tingkat'] ?? '').toString(),
+            },
+          )
+          .where(
+            (t) =>
+                t['kategori']!.isNotEmpty ||
+                t['nama']!.isNotEmpty ||
+                t['tingkat']!.isNotEmpty,
+          )
           .toList();
 
       kemampuanBahasa = bah
@@ -132,8 +144,11 @@ class _ProfilPageState extends State<ProfilPage> {
       setState(() => pengalamanKerja = newList);
   void _updatePendidikan(List<Map<String, String>> newList) =>
       setState(() => riwayatPendidikan = newList);
-  void _updateKemampuanTeknis(List<String> newList) =>
+
+  // ✅ updater diperbarui
+  void _updateKemampuanTeknis(List<Map<String, String>> newList) =>
       setState(() => kemampuanTeknis = newList);
+
   void _updateKemampuanBahasa(List<Map<String, String>> newList) =>
       setState(() => kemampuanBahasa = newList);
   void _updateCV(String? newCV) => setState(() => cvPath = newCV);
@@ -258,12 +273,18 @@ class _ProfilPageState extends State<ProfilPage> {
             _buildPendidikanCard(context),
             const SizedBox(height: 16),
 
+            // ===================== KEMAMPUAN TEKNIS (baru) =====================
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
               subtitle: kemampuanTeknis.isEmpty
                   ? "Belum ditambahkan"
-                  : kemampuanTeknis.join(", "),
+                  : kemampuanTeknis
+                        .map(
+                          (k) =>
+                              "${k['kategori']} - ${k['nama']} (${k['tingkat']})",
+                        )
+                        .join("\n"),
               isEdit: true,
               onTap: () async {
                 final result = await Navigator.push(
@@ -271,13 +292,30 @@ class _ProfilPageState extends State<ProfilPage> {
                   MaterialPageRoute(
                     builder: (context) => KemampuanTeknisPage(
                       kemampuanSebelumnya: kemampuanTeknis,
+                      onUpdate: (newList) {
+                        _updateKemampuanTeknis(newList);
+                      },
                     ),
                   ),
                 );
-                if (result != null && result['kemampuan'] != null) {
-                  _updateKemampuanTeknis(
-                    List<String>.from(result['kemampuan']),
-                  );
+
+                // ✅ pastikan result benar-benar Map dan punya key 'kemampuan'
+                if (result is Map && result.containsKey('kemampuan')) {
+                  final kemampuanBaru = result['kemampuan'];
+                  if (kemampuanBaru is List) {
+                    _updateKemampuanTeknis(
+                      List<Map<String, String>>.from(
+                        kemampuanBaru.map(
+                          (item) => Map<String, String>.from(
+                            item.map(
+                              (k, v) => MapEntry(k.toString(), v.toString()),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  await _loadAllData(); // sinkron ke DB
                 }
               },
             ),
@@ -495,6 +533,8 @@ class _ProfilPageState extends State<ProfilPage> {
           _updatePendidikan(
             List<Map<String, String>>.from(result['pendidikan']),
           );
+        } else {
+          // ✅ Jika tidak ada data dikembalikan (misal user cuma tekan back),
           _loadAllData();
         }
       },

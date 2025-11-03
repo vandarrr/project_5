@@ -48,11 +48,13 @@ class DatabaseHelper {
 
     // ===================== TABLE KEMAMPUAN TEKNIS =====================
     await db.execute('''
-      CREATE TABLE kemampuan_teknis (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nama TEXT
-      )
-    ''');
+  CREATE TABLE kemampuan_teknis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama TEXT,
+    kategori TEXT,
+    tingkat TEXT
+  )
+''');
 
     // ===================== TABLE KEMAMPUAN BAHASA =====================
     await db.execute('''
@@ -121,18 +123,20 @@ class DatabaseHelper {
   }
 
   // ===================== KEMAMPUAN TEKNIS =====================
-  Future<int> insertKemampuanTeknis(Map<String, dynamic> row) async {
-    final db = await instance.database;
-    return await db.insert('kemampuan_teknis', row);
+  Future<int> insertKemampuanTeknis(Map<String, dynamic> data) async {
+    final db = await database;
+    return await db.insert('kemampuan_teknis', data);
   }
 
+  // GET semua kemampuan teknis
   Future<List<Map<String, dynamic>>> getAllKemampuanTeknis() async {
-    final db = await instance.database;
-    return await db.query('kemampuan_teknis', orderBy: 'id DESC');
+    final db = await database;
+    return await db.query('kemampuan_teknis');
   }
 
+  // DELETE kemampuan teknis berdasarkan id
   Future<int> deleteKemampuanTeknis(int id) async {
-    final db = await instance.database;
+    final db = await database;
     return await db.delete(
       'kemampuan_teknis',
       where: 'id = ?',
