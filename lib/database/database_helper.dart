@@ -1,15 +1,17 @@
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
+
   static Database? _database;
 
   DatabaseHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('app.db');
+    _database = await _initDB('profil_app.db');
     return _database!;
   }
 
@@ -17,34 +19,13 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 2,
-      onCreate: _createDB,
-      onUpgrade: _upgradeDB,
-    );
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  // === Buat tabel awal ===
   Future _createDB(Database db, int version) async {
-    // === Table user (data diri) ===
+    // ===================== TABLE PENGALAMAN KERJA =====================
     await db.execute('''
-      CREATE TABLE user (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nama TEXT,
-        email TEXT,
-        noHp TEXT,
-        gender TEXT,
-        tanggalLahir TEXT,
-        lokasi TEXT,
-        posisi TEXT,
-        kota TEXT
-      )
-    ''');
-
-    // === Table pengalaman kerja (versi baru) ===
-    await db.execute('''
-      CREATE TABLE pengalaman (
+      CREATE TABLE pengalaman_kerja (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         perusahaan TEXT,
         posisi TEXT,
@@ -55,9 +36,9 @@ class DatabaseHelper {
       )
     ''');
 
-    // === Table pendidikan ===
+    // ===================== TABLE RIWAYAT PENDIDIKAN =====================
     await db.execute('''
-      CREATE TABLE pendidikan (
+      CREATE TABLE riwayat_pendidikan (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         institusi TEXT,
         jurusan TEXT,
@@ -65,7 +46,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // === Table kemampuan teknis ===
+    // ===================== TABLE KEMAMPUAN TEKNIS =====================
     await db.execute('''
       CREATE TABLE kemampuan_teknis (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +54,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // === Table kemampuan bahasa ===
+    // ===================== TABLE KEMAMPUAN BAHASA =====================
     await db.execute('''
       CREATE TABLE kemampuan_bahasa (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,97 +63,72 @@ class DatabaseHelper {
       )
     ''');
 
-    // === Table dokumen dan CV ===
-    await db.execute('''
-      CREATE TABLE dokumen (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        path TEXT
-      )
-    ''');
-
+    // ===================== TABLE CV =====================
     await db.execute('''
       CREATE TABLE cv (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         path TEXT
       )
     ''');
+
+    // ===================== TABLE DOKUMEN =====================
+    await db.execute('''
+      CREATE TABLE dokumen (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT
+      )
+    ''');
   }
 
-  // === Jika kamu upgrade dari versi lama (tanpa tanggal/gaji/deskripsi) ===
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Tambahkan kolom baru ke tabel pengalaman lama
-      await db.execute('ALTER TABLE pengalaman ADD COLUMN tanggalMasuk TEXT');
-      await db.execute('ALTER TABLE pengalaman ADD COLUMN tanggalKeluar TEXT');
-      await db.execute('ALTER TABLE pengalaman ADD COLUMN gaji TEXT');
-      await db.execute('ALTER TABLE pengalaman ADD COLUMN deskripsi TEXT');
-    }
-  }
-
-  // ==================== CRUD: USER (DATA DIRI) ====================
-  Future<int> insertUser(Map<String, dynamic> data) async {
+  // ===================== PENGALAMAN KERJA =====================
+  Future<int> insertPengalaman(Map<String, dynamic> row) async {
     final db = await instance.database;
-    return await db.insert('user', data);
+    return await db.insert('pengalaman_kerja', row);
   }
 
-  Future<Map<String, dynamic>?> getUser() async {
-    final db = await instance.database;
-    final result = await db.query('user', limit: 1);
-    if (result.isNotEmpty) return result.first;
-    return null;
-  }
-
-  Future<int> updateUser(Map<String, dynamic> data) async {
-    final db = await instance.database;
-    return await db.update('user', data, where: 'id = ?', whereArgs: [1]);
-  }
-
-  // ==================== CRUD: PENGALAMAN ====================
   Future<List<Map<String, dynamic>>> getAllPengalaman() async {
     final db = await instance.database;
-    return await db.query('pengalaman', orderBy: 'id DESC');
-  }
-
-  Future<int> insertPengalaman(Map<String, dynamic> data) async {
-    final db = await instance.database;
-    return await db.insert('pengalaman', data);
+    return await db.query('pengalaman_kerja', orderBy: 'id DESC');
   }
 
   Future<int> deletePengalaman(int id) async {
     final db = await instance.database;
-    return await db.delete('pengalaman', where: 'id = ?', whereArgs: [id]);
+    return await db.delete(
+      'pengalaman_kerja',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  Future<void> deleteAllPengalaman() async {
+  // ===================== RIWAYAT PENDIDIKAN =====================
+  Future<int> insertPendidikan(Map<String, dynamic> row) async {
     final db = await instance.database;
-    await db.delete('pengalaman');
+    return await db.insert('riwayat_pendidikan', row);
   }
 
-  // ==================== CRUD: PENDIDIKAN ====================
   Future<List<Map<String, dynamic>>> getAllPendidikan() async {
     final db = await instance.database;
-    return await db.query('pendidikan');
-  }
-
-  Future<int> insertPendidikan(Map<String, dynamic> data) async {
-    final db = await instance.database;
-    return await db.insert('pendidikan', data);
+    return await db.query('riwayat_pendidikan', orderBy: 'id DESC');
   }
 
   Future<int> deletePendidikan(int id) async {
     final db = await instance.database;
-    return await db.delete('pendidikan', where: 'id = ?', whereArgs: [id]);
+    return await db.delete(
+      'riwayat_pendidikan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  // ==================== CRUD: KEMAMPUAN TEKNIS ====================
+  // ===================== KEMAMPUAN TEKNIS =====================
+  Future<int> insertKemampuanTeknis(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('kemampuan_teknis', row);
+  }
+
   Future<List<Map<String, dynamic>>> getAllKemampuanTeknis() async {
     final db = await instance.database;
-    return await db.query('kemampuan_teknis');
-  }
-
-  Future<int> insertKemampuanTeknis(String nama) async {
-    final db = await instance.database;
-    return await db.insert('kemampuan_teknis', {'nama': nama});
+    return await db.query('kemampuan_teknis', orderBy: 'id DESC');
   }
 
   Future<int> deleteKemampuanTeknis(int id) async {
@@ -184,15 +140,15 @@ class DatabaseHelper {
     );
   }
 
-  // ==================== CRUD: KEMAMPUAN BAHASA ====================
-  Future<List<Map<String, dynamic>>> getAllKemampuanBahasa() async {
+  // ===================== KEMAMPUAN BAHASA =====================
+  Future<int> insertKemampuanBahasa(Map<String, dynamic> row) async {
     final db = await instance.database;
-    return await db.query('kemampuan_bahasa');
+    return await db.insert('kemampuan_bahasa', row);
   }
 
-  Future<int> insertKemampuanBahasa(Map<String, dynamic> data) async {
+  Future<List<Map<String, dynamic>>> getAllKemampuanBahasa() async {
     final db = await instance.database;
-    return await db.insert('kemampuan_bahasa', data);
+    return await db.query('kemampuan_bahasa', orderBy: 'id DESC');
   }
 
   Future<int> deleteKemampuanBahasa(int id) async {
@@ -204,15 +160,31 @@ class DatabaseHelper {
     );
   }
 
-  // ==================== CRUD: DOKUMEN & CV ====================
-  Future<List<Map<String, dynamic>>> getAllDokumen() async {
+  // ===================== CV =====================
+  Future<int> insertCV(Map<String, dynamic> row) async {
     final db = await instance.database;
-    return await db.query('dokumen');
+    return await db.insert('cv', row);
   }
 
-  Future<int> insertDokumen(String path) async {
+  Future<List<Map<String, dynamic>>> getAllCV() async {
     final db = await instance.database;
-    return await db.insert('dokumen', {'path': path});
+    return await db.query('cv', orderBy: 'id DESC');
+  }
+
+  Future<int> deleteCV(int id) async {
+    final db = await instance.database;
+    return await db.delete('cv', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ===================== DOKUMEN =====================
+  Future<int> insertDokumen(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('dokumen', row);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllDokumen() async {
+    final db = await instance.database;
+    return await db.query('dokumen', orderBy: 'id DESC');
   }
 
   Future<int> deleteDokumen(int id) async {
@@ -220,18 +192,9 @@ class DatabaseHelper {
     return await db.delete('dokumen', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<List<Map<String, dynamic>>> getAllCV() async {
+  // ===================== CLOSE DB =====================
+  Future close() async {
     final db = await instance.database;
-    return await db.query('cv');
-  }
-
-  Future<int> insertCV(String path) async {
-    final db = await instance.database;
-    return await db.insert('cv', {'path': path});
-  }
-
-  Future<int> deleteCV(int id) async {
-    final db = await instance.database;
-    return await db.delete('cv', where: 'id = ?', whereArgs: [id]);
+    db.close();
   }
 }

@@ -4,9 +4,14 @@ import '../database/database_helper.dart';
 
 class PengalamanKerjaPage extends StatefulWidget {
   final List<Map<String, String>>? pengalamanSebelumnya;
+  final Function(List<Map<String, String>>)?
+  onUpdate; // ✅ Callback untuk ProfilPage
 
-  const PengalamanKerjaPage({Key? key, this.pengalamanSebelumnya})
-    : super(key: key);
+  const PengalamanKerjaPage({
+    Key? key,
+    this.pengalamanSebelumnya,
+    this.onUpdate,
+  }) : super(key: key);
 
   @override
   State<PengalamanKerjaPage> createState() => _PengalamanKerjaPageState();
@@ -31,7 +36,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
     _loadPengalaman();
   }
 
-  // ====================== LOAD DATA DARI SQLITE ======================
   Future<void> _loadPengalaman() async {
     final data = await dbHelper.getAllPengalaman();
     setState(() {
@@ -39,7 +43,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
     });
   }
 
-  // ====================== PILIH TANGGAL ======================
   Future<void> _pilihTanggal(
     TextEditingController controller,
     String label,
@@ -55,7 +58,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
     }
   }
 
-  // ====================== TAMBAH DATA KE SQLITE ======================
   Future<void> _tambahPengalaman() async {
     if (_formKey.currentState!.validate()) {
       final data = {
@@ -69,13 +71,18 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
         'deskripsi': deskripsiController.text,
       };
 
-      // Simpan ke SQLite
       await dbHelper.insertPengalaman(data);
-
-      // Muat ulang data dari SQLite agar sinkron
       await _loadPengalaman();
 
-      // Bersihkan form
+      // ✅ Panggil callback agar ProfilPage langsung update
+      if (widget.onUpdate != null) {
+        widget.onUpdate!(
+          pengalamanList
+              .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
+              .toList(),
+        );
+      }
+
       posisiController.clear();
       perusahaanController.clear();
       tanggalMasukController.clear();
@@ -92,19 +99,32 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
     }
   }
 
-  // ====================== HAPUS DARI SQLITE ======================
   Future<void> _hapusPengalaman(int id) async {
     await dbHelper.deletePengalaman(id);
     await _loadPengalaman();
+
+    if (widget.onUpdate != null) {
+      widget.onUpdate!(
+        pengalamanList
+            .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
+            .toList(),
+      );
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Pengalaman kerja berhasil dihapus")),
     );
   }
 
-  // ====================== SIMPAN SEMUA DAN KEMBALI ======================
   void _simpanSemua() {
-    Navigator.pop(context, {'pengalaman': pengalamanList});
+    if (widget.onUpdate != null) {
+      widget.onUpdate!(
+        pengalamanList
+            .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
+            .toList(),
+      );
+    }
+    Navigator.pop(context);
   }
 
   @override
@@ -118,7 +138,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
     super.dispose();
   }
 
-  // ====================== UI ======================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,7 +173,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ================= FORM INPUT =================
             Form(
               key: _formKey,
               child: Column(
@@ -168,7 +186,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                         v == null || v.isEmpty ? "Posisi wajib diisi" : null,
                   ),
                   const SizedBox(height: 16),
-
                   _judul("Nama Perusahaan"),
                   TextFormField(
                     controller: perusahaanController,
@@ -178,7 +195,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                         : null,
                   ),
                   const SizedBox(height: 10),
-
                   Row(
                     children: [
                       Checkbox(
@@ -190,7 +206,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-
                   Row(
                     children: [
                       Expanded(
@@ -229,7 +244,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   _judul("Gaji"),
                   TextFormField(
                     controller: gajiController,
@@ -239,7 +253,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   _judul("Deskripsi Pekerjaan"),
                   TextFormField(
                     controller: deskripsiController,
@@ -249,7 +262,6 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -270,16 +282,12 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
-            // ================= LIST PENGALAMAN DALAM CARD =================
             const Text(
               "Daftar Pengalaman Kerja",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 10),
-
             pengalamanList.isEmpty
                 ? const Center(
                     child: Text(
@@ -344,9 +352,7 @@ class _PengalamanKerjaPageState extends State<PengalamanKerjaPage> {
                       );
                     }).toList(),
                   ),
-
             const SizedBox(height: 16),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

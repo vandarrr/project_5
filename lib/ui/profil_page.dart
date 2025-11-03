@@ -251,6 +251,7 @@ class _ProfilPageState extends State<ProfilPage> {
 
             const SizedBox(height: 16),
 
+            // ===================== PENGALAMAN KERJA =====================
             _buildPengalamanCard(context),
             const SizedBox(height: 16),
 
@@ -427,6 +428,7 @@ class _ProfilPageState extends State<ProfilPage> {
     ),
   );
 
+  // ===================== PENGALAMAN KERJA =====================
   Widget _buildPengalamanCard(BuildContext context) => Card(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     elevation: 2,
@@ -437,29 +439,27 @@ class _ProfilPageState extends State<ProfilPage> {
           ? const Text("Belum ada pengalaman kerja")
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: pengalamanKerja
-                  .map(
-                    (p) => Text(
-                      "${p['perusahaan']} - ${p['posisi']} (${p['tahun']})",
-                    ),
-                  )
-                  .toList(),
+              children: pengalamanKerja.map((p) {
+                final perusahaan = p['perusahaan'] ?? '';
+                final posisi = p['posisi'] ?? '';
+                final tahun = p['tahun'] ?? '';
+                final tampilTahun = tahun.isNotEmpty ? "($tahun)" : "";
+                return Text("$perusahaan - $posisi $tampilTahun");
+              }).toList(),
             ),
       trailing: const Icon(Icons.edit, color: Colors.blue),
       onTap: () async {
-        final result = await Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                PengalamanKerjaPage(pengalamanSebelumnya: pengalamanKerja),
+            builder: (context) => PengalamanKerjaPage(
+              pengalamanSebelumnya: pengalamanKerja,
+              onUpdate: (newList) {
+                _updatePengalaman(newList); // 🔥 langsung update tanpa pop
+              },
+            ),
           ),
         );
-        if (result != null && result['pengalaman'] != null) {
-          _updatePengalaman(
-            List<Map<String, String>>.from(result['pengalaman']),
-          );
-          _loadAllData(); // 🔄 Reload dari SQLite
-        }
       },
     ),
   );
