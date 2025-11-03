@@ -19,6 +19,11 @@ dependencies:
   # ✅ Tambahkan ini untuk fitur unggah file CV/dokumen
   file_picker: ^8.0.0
 
+  # ✅ Tambahkan ini untuk database lokal SQLite
+  sqflite: ^2.4.0
+  path: ^1.9.0
+  intl: ^0.18.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

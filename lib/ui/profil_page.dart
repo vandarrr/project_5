@@ -7,6 +7,7 @@ import 'riwayat_pendidikan_page.dart';
 import 'kemampuan_teknis_page.dart';
 import 'kemampuan_bahasa_page.dart';
 import 'cv_page.dart';
+import '../database/database_helper.dart';
 import 'unggah_dokumen_page.dart';
 import 'ganti_password_page.dart'; // ✅ Tambahan import baru
 
@@ -18,6 +19,8 @@ class ProfilPage extends StatefulWidget {
 }
 
 class _ProfilPageState extends State<ProfilPage> {
+  final dbHelper = DatabaseHelper.instance;
+
   // ===================== DATA PROFIL =====================
   String nama = "Rizky Maulana Dzuhry";
   String email = "rizkymd82@gmail.com";
@@ -36,6 +39,80 @@ class _ProfilPageState extends State<ProfilPage> {
   List<Map<String, String>> riwayatPendidikan = [];
   List<String> kemampuanTeknis = [];
   List<Map<String, String>> kemampuanBahasa = [];
+
+  // ===================== INIT LOAD FROM DATABASE =====================
+  @override
+  void initState() {
+    super.initState();
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    final exp = await dbHelper.getAllPengalaman();
+    final pend = await dbHelper.getAllPendidikan();
+    final tek = await dbHelper.getAllKemampuanTeknis();
+    final bah = await dbHelper.getAllKemampuanBahasa();
+    final dok = await dbHelper.getAllDokumen();
+    final cv = await dbHelper.getAllCV();
+
+    setState(() {
+      pengalamanKerja = exp
+          .map<Map<String, String>>(
+            (e) => {
+              'perusahaan': (e['perusahaan'] ?? '').toString(),
+              'posisi': (e['posisi'] ?? '').toString(),
+              'tahun': (e['tahun'] ?? '').toString(),
+            },
+          )
+          .where(
+            (p) =>
+                p['perusahaan']!.isNotEmpty ||
+                p['posisi']!.isNotEmpty ||
+                p['tahun']!.isNotEmpty,
+          )
+          .toList();
+
+      riwayatPendidikan = pend
+          .map<Map<String, String>>(
+            (e) => {
+              'institusi': (e['institusi'] ?? '').toString(),
+              'jurusan': (e['jurusan'] ?? '').toString(),
+              'tahun': (e['tahun'] ?? '').toString(),
+            },
+          )
+          .where(
+            (p) =>
+                p['institusi']!.isNotEmpty ||
+                p['jurusan']!.isNotEmpty ||
+                p['tahun']!.isNotEmpty,
+          )
+          .toList();
+
+      kemampuanTeknis = tek
+          .map((e) => (e['nama'] ?? '').toString())
+          .where((x) => x.isNotEmpty)
+          .toList();
+
+      kemampuanBahasa = bah
+          .map<Map<String, String>>(
+            (e) => {
+              'bahasa': (e['bahasa'] ?? '').toString(),
+              'tingkat': (e['tingkat'] ?? '').toString(),
+            },
+          )
+          .where((b) => b['bahasa']!.isNotEmpty || b['tingkat']!.isNotEmpty)
+          .toList();
+
+      dokumenList = dok
+          .map((e) => (e['path'] ?? '').toString())
+          .where((x) => x.isNotEmpty)
+          .toList();
+
+      if (cv.isNotEmpty) {
+        cvPath = cv.last['path'];
+      }
+    });
+  }
 
   // ===================== UPDATE DATA =====================
   void _updateData(Map<String, dynamic> newData) {
@@ -104,7 +181,6 @@ class _ProfilPageState extends State<ProfilPage> {
         child: Column(
           children: [
             const SizedBox(height: 8),
-            // FOTO PROFIL
             Stack(
               alignment: Alignment.bottomRight,
               children: [
@@ -135,11 +211,9 @@ class _ProfilPageState extends State<ProfilPage> {
             Text(userId, style: const TextStyle(color: Colors.blue)),
             const SizedBox(height: 16),
 
-            // ===================== DATA DIRI =====================
             _buildDataDiriCard(context),
             const SizedBox(height: 16),
 
-            // ===================== POSISI & KOTA =====================
             _buildCard(
               icon: Icons.work_outline,
               title: "Posisi Diinginkan",
@@ -177,15 +251,12 @@ class _ProfilPageState extends State<ProfilPage> {
 
             const SizedBox(height: 16),
 
-            // ===================== PENGALAMAN KERJA =====================
             _buildPengalamanCard(context),
             const SizedBox(height: 16),
 
-            // ===================== RIWAYAT PENDIDIKAN =====================
             _buildPendidikanCard(context),
             const SizedBox(height: 16),
 
-            // ===================== KEMAMPUAN TEKNIS =====================
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
@@ -210,7 +281,6 @@ class _ProfilPageState extends State<ProfilPage> {
               },
             ),
 
-            // ===================== KEMAMPUAN BAHASA =====================
             _buildCard(
               icon: Icons.language_outlined,
               title: "Kemampuan Bahasa",
@@ -238,7 +308,6 @@ class _ProfilPageState extends State<ProfilPage> {
 
             const SizedBox(height: 16),
 
-            // ===================== CURRICULUM VITAE (CV) =====================
             _buildCard(
               icon: Icons.attach_file_outlined,
               title: "Curriculum Vitae (CV)",
@@ -257,7 +326,6 @@ class _ProfilPageState extends State<ProfilPage> {
               },
             ),
 
-            // ===================== UNGGAH DOKUMEN =====================
             ListTile(
               leading: const Icon(Icons.folder_open, color: Colors.blue),
               title: const Text("Unggah Dokumen"),
@@ -281,7 +349,6 @@ class _ProfilPageState extends State<ProfilPage> {
               },
             ),
 
-            // ===================== GANTI PASSWORD =====================
             ListTile(
               leading: const Icon(Icons.lock_outline, color: Colors.blue),
               title: const Text("Ganti Password"),
@@ -391,6 +458,7 @@ class _ProfilPageState extends State<ProfilPage> {
           _updatePengalaman(
             List<Map<String, String>>.from(result['pengalaman']),
           );
+          _loadAllData(); // 🔄 Reload dari SQLite
         }
       },
     ),
@@ -427,6 +495,7 @@ class _ProfilPageState extends State<ProfilPage> {
           _updatePendidikan(
             List<Map<String, String>>.from(result['pendidikan']),
           );
+          _loadAllData();
         }
       },
     ),
@@ -482,12 +551,6 @@ class _ProfilPageState extends State<ProfilPage> {
             label: "Profil",
           ),
         ],
-        onTap: (index) {
-          if (index != 3) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Navigasi belum diatur")),
-            );
-          }
-        },
+        onTap: (index) {},
       );
 }
