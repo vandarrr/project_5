@@ -9,6 +9,9 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
+  // versi database saat ini
+  static const int _dbVersion = 2;
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('profil_app.db');
@@ -19,11 +22,16 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: _dbVersion,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
+  // ===================== CREATE DB =====================
   Future _createDB(Database db, int version) async {
-    // ===================== TABLE PENGALAMAN KERJA =====================
     await db.execute('''
       CREATE TABLE pengalaman_kerja (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +44,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // ===================== TABLE RIWAYAT PENDIDIKAN =====================
     await db.execute('''
       CREATE TABLE riwayat_pendidikan (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,17 +53,15 @@ class DatabaseHelper {
       )
     ''');
 
-    // ===================== TABLE KEMAMPUAN TEKNIS =====================
     await db.execute('''
-  CREATE TABLE kemampuan_teknis (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nama TEXT,
-    kategori TEXT,
-    tingkat TEXT
-  )
-''');
+      CREATE TABLE kemampuan_teknis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT,
+        kategori TEXT,
+        tingkat TEXT
+      )
+    ''');
 
-    // ===================== TABLE KEMAMPUAN BAHASA =====================
     await db.execute('''
       CREATE TABLE kemampuan_bahasa (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +70,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // ===================== TABLE CV =====================
     await db.execute('''
       CREATE TABLE cv (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,13 +77,32 @@ class DatabaseHelper {
       )
     ''');
 
-    // ===================== TABLE DOKUMEN =====================
     await db.execute('''
       CREATE TABLE dokumen (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         path TEXT
       )
     ''');
+  }
+
+  // ===================== UPGRADE DB =====================
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    // Versi 2: pastikan kolom kategori & tingkat ada
+    if (oldVersion < 2) {
+      final columns = await db.rawQuery("PRAGMA table_info(kemampuan_teknis)");
+      final columnNames = columns.map((c) => c['name'] as String).toList();
+
+      if (!columnNames.contains('kategori')) {
+        await db.execute(
+          'ALTER TABLE kemampuan_teknis ADD COLUMN kategori TEXT',
+        );
+      }
+      if (!columnNames.contains('tingkat')) {
+        await db.execute(
+          'ALTER TABLE kemampuan_teknis ADD COLUMN tingkat TEXT',
+        );
+      }
+    }
   }
 
   // ===================== PENGALAMAN KERJA =====================
@@ -123,22 +146,47 @@ class DatabaseHelper {
   }
 
   // ===================== KEMAMPUAN TEKNIS =====================
+  Future<void> _ensureColumnsKemampuanTeknis() async {
+    final db = await database;
+    final columns = await db.rawQuery("PRAGMA table_info(kemampuan_teknis)");
+    final columnNames = columns.map((c) => c['name'] as String).toList();
+
+    if (!columnNames.contains('kategori')) {
+      await db.execute('ALTER TABLE kemampuan_teknis ADD COLUMN kategori TEXT');
+    }
+    if (!columnNames.contains('tingkat')) {
+      await db.execute('ALTER TABLE kemampuan_teknis ADD COLUMN tingkat TEXT');
+    }
+  }
+
   Future<int> insertKemampuanTeknis(Map<String, dynamic> data) async {
     final db = await database;
+    await _ensureColumnsKemampuanTeknis();
     return await db.insert('kemampuan_teknis', data);
   }
 
-  // GET semua kemampuan teknis
   Future<List<Map<String, dynamic>>> getAllKemampuanTeknis() async {
     final db = await database;
-    return await db.query('kemampuan_teknis');
+    await _ensureColumnsKemampuanTeknis();
+    return await db.query('kemampuan_teknis', orderBy: 'id DESC');
   }
 
-  // DELETE kemampuan teknis berdasarkan id
   Future<int> deleteKemampuanTeknis(int id) async {
     final db = await database;
+    await _ensureColumnsKemampuanTeknis();
     return await db.delete(
       'kemampuan_teknis',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> updateKemampuanTeknis(int id, Map<String, dynamic> data) async {
+    final db = await database;
+    await _ensureColumnsKemampuanTeknis();
+    return await db.update(
+      'kemampuan_teknis',
+      data,
       where: 'id = ?',
       whereArgs: [id],
     );

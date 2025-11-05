@@ -9,7 +9,7 @@ import 'kemampuan_bahasa_page.dart';
 import 'cv_page.dart';
 import '../database/database_helper.dart';
 import 'unggah_dokumen_page.dart';
-import 'ganti_password_page.dart'; // ✅ Tambahan import baru
+import 'ganti_password_page.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({Key? key}) : super(key: key);
@@ -33,11 +33,11 @@ class _ProfilPageState extends State<ProfilPage> {
   String userId = "#187357";
 
   String? cvPath;
-  List<String> dokumenList = []; // ✅ Tambahan untuk dokumen
+  List<String> dokumenList = [];
 
   List<Map<String, String>> pengalamanKerja = [];
   List<Map<String, String>> riwayatPendidikan = [];
-  List<Map<String, String>> kemampuanTeknis = []; // ✅ diperbarui
+  List<Map<String, String>> kemampuanTeknis = [];
   List<Map<String, String>> kemampuanBahasa = [];
 
   // ===================== INIT LOAD FROM DATABASE =====================
@@ -88,10 +88,10 @@ class _ProfilPageState extends State<ProfilPage> {
           )
           .toList();
 
-      // ✅ kemampuan teknis sekarang berbentuk map, bukan string
       kemampuanTeknis = tek
           .map<Map<String, String>>(
             (e) => {
+              'id': (e['id'] ?? '').toString(),
               'kategori': (e['kategori'] ?? '').toString(),
               'nama': (e['nama'] ?? '').toString(),
               'tingkat': (e['tingkat'] ?? '').toString(),
@@ -144,11 +144,8 @@ class _ProfilPageState extends State<ProfilPage> {
       setState(() => pengalamanKerja = newList);
   void _updatePendidikan(List<Map<String, String>> newList) =>
       setState(() => riwayatPendidikan = newList);
-
-  // ✅ updater diperbarui
   void _updateKemampuanTeknis(List<Map<String, String>> newList) =>
       setState(() => kemampuanTeknis = newList);
-
   void _updateKemampuanBahasa(List<Map<String, String>> newList) =>
       setState(() => kemampuanBahasa = newList);
   void _updateCV(String? newCV) => setState(() => cvPath = newCV);
@@ -265,15 +262,11 @@ class _ProfilPageState extends State<ProfilPage> {
             ),
 
             const SizedBox(height: 16),
-
-            // ===================== PENGALAMAN KERJA =====================
             _buildPengalamanCard(context),
             const SizedBox(height: 16),
-
             _buildPendidikanCard(context),
             const SizedBox(height: 16),
 
-            // ===================== KEMAMPUAN TEKNIS (baru) =====================
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
@@ -299,7 +292,6 @@ class _ProfilPageState extends State<ProfilPage> {
                   ),
                 );
 
-                // ✅ pastikan result benar-benar Map dan punya key 'kemampuan'
                 if (result is Map && result.containsKey('kemampuan')) {
                   final kemampuanBaru = result['kemampuan'];
                   if (kemampuanBaru is List) {
@@ -315,7 +307,7 @@ class _ProfilPageState extends State<ProfilPage> {
                       ),
                     );
                   }
-                  await _loadAllData(); // sinkron ke DB
+                  await _loadAllData();
                 }
               },
             ),
@@ -346,7 +338,6 @@ class _ProfilPageState extends State<ProfilPage> {
             ),
 
             const SizedBox(height: 16),
-
             _buildCard(
               icon: Icons.attach_file_outlined,
               title: "Curriculum Vitae (CV)",
@@ -466,7 +457,6 @@ class _ProfilPageState extends State<ProfilPage> {
     ),
   );
 
-  // ===================== PENGALAMAN KERJA =====================
   Widget _buildPengalamanCard(BuildContext context) => Card(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     elevation: 2,
@@ -493,7 +483,7 @@ class _ProfilPageState extends State<ProfilPage> {
             builder: (context) => PengalamanKerjaPage(
               pengalamanSebelumnya: pengalamanKerja,
               onUpdate: (newList) {
-                _updatePengalaman(newList); // 🔥 langsung update tanpa pop
+                _updatePengalaman(newList);
               },
             ),
           ),
@@ -534,7 +524,6 @@ class _ProfilPageState extends State<ProfilPage> {
             List<Map<String, String>>.from(result['pendidikan']),
           );
         } else {
-          // ✅ Jika tidak ada data dikembalikan (misal user cuma tekan back),
           _loadAllData();
         }
       },

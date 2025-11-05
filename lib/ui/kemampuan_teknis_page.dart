@@ -27,13 +27,24 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
     _loadKemampuan();
   }
 
+  // Load semua kemampuan dari database
   Future<void> _loadKemampuan() async {
     final data = await dbHelper.getAllKemampuanTeknis();
     setState(() {
       kemampuanList = data;
     });
+
+    // Update ProfilPage jika callback tersedia
+    if (widget.onUpdate != null) {
+      widget.onUpdate!(
+        kemampuanList
+            .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
+            .toList(),
+      );
+    }
   }
 
+  // Tambah kemampuan baru
   Future<void> _tambahKemampuan() async {
     if (_formKey.currentState!.validate()) {
       final data = {
@@ -42,44 +53,41 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
         'tingkat': tingkatController.text,
       };
 
-      await dbHelper.insertKemampuanTeknis(data);
-      await _loadKemampuan();
+      try {
+        await dbHelper.insertKemampuanTeknis(data);
 
-      if (widget.onUpdate != null) {
-        widget.onUpdate!(
-          kemampuanList
-              .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
-              .toList(),
+        // Reload list agar sinkron dengan database
+        await _loadKemampuan();
+
+        // Clear form
+        namaController.clear();
+        kategoriController.clear();
+        tingkatController.clear();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Kemampuan teknis berhasil ditambahkan"),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal menambahkan kemampuan: $e")),
         );
       }
-
-      namaController.clear();
-      kategoriController.clear();
-      tingkatController.clear();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Kemampuan teknis berhasil ditambahkan")),
-      );
     }
   }
 
+  // Hapus kemampuan
   Future<void> _hapusKemampuan(int id) async {
     await dbHelper.deleteKemampuanTeknis(id);
     await _loadKemampuan();
-
-    if (widget.onUpdate != null) {
-      widget.onUpdate!(
-        kemampuanList
-            .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
-            .toList(),
-      );
-    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Kemampuan teknis berhasil dihapus")),
     );
   }
 
+  // Simpan semua dan kembali ke ProfilPage
   void _simpanSemua() {
     final updatedList = kemampuanList
         .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
