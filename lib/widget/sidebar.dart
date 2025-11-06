@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../ui/beranda.dart';
 import '../ui/login.dart';
 import '../ui/lamaran_page.dart';
+import '../ui/welcome_page.dart';
 import '../ui/profil_page.dart'; // ✅ import halaman profil
 
 class Sidebar extends StatelessWidget {
@@ -91,7 +92,7 @@ class Sidebar extends StatelessWidget {
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const Login()),
+                  MaterialPageRoute(builder: (context) => const WelcomePage()),
                   (Route<dynamic> route) => false,
                 );
               },

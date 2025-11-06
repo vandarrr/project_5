@@ -1,4 +1,9 @@
+// profil_page.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'edit_data_diri_page.dart';
 import 'posisi_diinginkan_page.dart';
 import 'kota_diinginkan_page.dart';
@@ -10,6 +15,7 @@ import 'cv_page.dart';
 import '../database/database_helper.dart';
 import 'unggah_dokumen_page.dart';
 import 'ganti_password_page.dart';
+import '../ui/welcome_page.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({Key? key}) : super(key: key);
@@ -40,6 +46,11 @@ class _ProfilPageState extends State<ProfilPage> {
   List<Map<String, String>> kemampuanTeknis = [];
   List<Map<String, String>> kemampuanBahasa = [];
 
+  // path gambar profil (disimpan di db dalam kolom 'foto_path')
+  String? profileImagePath;
+
+  final ImagePicker _picker = ImagePicker();
+
   // ===================== INIT LOAD FROM DATABASE =====================
   @override
   void initState() {
@@ -48,84 +59,153 @@ class _ProfilPageState extends State<ProfilPage> {
   }
 
   Future<void> _loadAllData() async {
+    final dbHelper = DatabaseHelper.instance;
+
     final exp = await dbHelper.getAllPengalaman();
     final pend = await dbHelper.getAllPendidikan();
     final tek = await dbHelper.getAllKemampuanTeknis();
     final bah = await dbHelper.getAllKemampuanBahasa();
     final dok = await dbHelper.getAllDokumen();
     final cv = await dbHelper.getAllCV();
+    final kotaSaved = await dbHelper.getKotaDiinginkan();
+    final posisiSaved = await dbHelper.getPosisiDiinginkan();
+    final dataDiri = await dbHelper.getDataDiri();
 
     setState(() {
-      pengalamanKerja = exp
-          .map<Map<String, String>>(
-            (e) => {
-              'perusahaan': (e['perusahaan'] ?? '').toString(),
-              'posisi': (e['posisi'] ?? '').toString(),
-              'tahun': (e['tahun'] ?? '').toString(),
-            },
-          )
-          .where(
-            (p) =>
-                p['perusahaan']!.isNotEmpty ||
-                p['posisi']!.isNotEmpty ||
-                p['tahun']!.isNotEmpty,
-          )
-          .toList();
+      // ===================== DATA DIRI =====================
+      if (dataDiri != null) {
+        nama = (dataDiri['nama'] ?? nama).toString();
+        email = (dataDiri['email'] ?? email).toString();
+        noHp = (dataDiri['no_hp'] ?? noHp).toString();
+        gender = (dataDiri['gender'] ?? gender).toString();
+        tanggalLahir = (dataDiri['tanggal_lahir'] ?? tanggalLahir).toString();
+        lokasi = (dataDiri['lokasi'] ?? lokasi).toString();
 
-      riwayatPendidikan = pend
-          .map<Map<String, String>>(
-            (e) => {
-              'institusi': (e['institusi'] ?? '').toString(),
-              'jurusan': (e['jurusan'] ?? '').toString(),
-              'tahun': (e['tahun'] ?? '').toString(),
-            },
-          )
-          .where(
-            (p) =>
-                p['institusi']!.isNotEmpty ||
-                p['jurusan']!.isNotEmpty ||
-                p['tahun']!.isNotEmpty,
-          )
-          .toList();
+        // foto profil (jika tersimpan)
+        final foto = dataDiri['foto_path'];
+        if (foto != null && foto.toString().isNotEmpty) {
+          profileImagePath = foto.toString();
+        }
+      }
 
-      kemampuanTeknis = tek
-          .map<Map<String, String>>(
-            (e) => {
-              'id': (e['id'] ?? '').toString(),
-              'kategori': (e['kategori'] ?? '').toString(),
-              'nama': (e['nama'] ?? '').toString(),
-              'tingkat': (e['tingkat'] ?? '').toString(),
-            },
-          )
-          .where(
-            (t) =>
-                t['kategori']!.isNotEmpty ||
-                t['nama']!.isNotEmpty ||
-                t['tingkat']!.isNotEmpty,
-          )
-          .toList();
+      // ===================== PENGALAMAN KERJA =====================
+      if (exp.isNotEmpty) {
+        pengalamanKerja = exp
+            .map<Map<String, String>>(
+              (e) => {
+                'perusahaan': (e['perusahaan'] ?? '').toString(),
+                'posisi': (e['posisi'] ?? '').toString(),
+                'tahun': (e['tahun'] ?? '').toString(),
+              },
+            )
+            .where(
+              (p) =>
+                  p['perusahaan']!.isNotEmpty ||
+                  p['posisi']!.isNotEmpty ||
+                  p['tahun']!.isNotEmpty,
+            )
+            .toList();
+      }
 
-      // ==== Tambahan sinkron kemampuan bahasa ====
-      kemampuanBahasa = bah
-          .map<Map<String, String>>(
-            (e) => {
-              'id': (e['id'] ?? '').toString(),
-              'bahasa': (e['bahasa'] ?? '').toString(),
-              'tingkat': (e['tingkat'] ?? '').toString(),
-            },
-          )
-          .where((b) => b['bahasa']!.isNotEmpty || b['tingkat']!.isNotEmpty)
-          .toList();
+      // ===================== RIWAYAT PENDIDIKAN =====================
+      if (pend.isNotEmpty) {
+        riwayatPendidikan = pend
+            .map<Map<String, String>>(
+              (e) => {
+                'institusi': (e['institusi'] ?? '').toString(),
+                'jurusan': (e['jurusan'] ?? '').toString(),
+                'tahun': (e['tahun'] ?? '').toString(),
+              },
+            )
+            .where(
+              (p) =>
+                  p['institusi']!.isNotEmpty ||
+                  p['jurusan']!.isNotEmpty ||
+                  p['tahun']!.isNotEmpty,
+            )
+            .toList();
+      }
 
-      dokumenList = dok
-          .map((e) => (e['path'] ?? '').toString())
-          .where((x) => x.isNotEmpty)
-          .toList();
+      // ===================== KEMAMPUAN TEKNIS =====================
+      if (tek.isNotEmpty) {
+        kemampuanTeknis = tek
+            .map<Map<String, String>>(
+              (e) => {
+                'id': (e['id'] ?? '').toString(),
+                'kategori': (e['kategori'] ?? '').toString(),
+                'nama': (e['nama'] ?? '').toString(),
+                'tingkat': (e['tingkat'] ?? '').toString(),
+              },
+            )
+            .where(
+              (t) =>
+                  t['kategori']!.isNotEmpty ||
+                  t['nama']!.isNotEmpty ||
+                  t['tingkat']!.isNotEmpty,
+            )
+            .toList();
+      }
 
+      // ===================== KEMAMPUAN BAHASA =====================
+      if (bah.isNotEmpty) {
+        kemampuanBahasa = bah
+            .map<Map<String, String>>(
+              (e) => {
+                'id': (e['id'] ?? '').toString(),
+                'bahasa': (e['bahasa'] ?? '').toString(),
+                'tingkat': (e['tingkat'] ?? '').toString(),
+              },
+            )
+            .where((b) => b['bahasa']!.isNotEmpty || b['tingkat']!.isNotEmpty)
+            .toList();
+      }
+
+      // ===================== DOKUMEN =====================
+      if (dok.isNotEmpty) {
+        dokumenList = dok
+            .map((e) => (e['path'] ?? '').toString())
+            .where((x) => x.isNotEmpty)
+            .toList();
+      }
+
+      // ===================== CV =====================
       if (cv.isNotEmpty) {
         cvPath = cv.last['path'];
       }
+
+      // ===================== KOTA DIINGINKAN =====================
+      if (kotaSaved != null && kotaSaved.isNotEmpty) {
+        kota = kotaSaved;
+      }
+
+      // ===================== POSISI DIINGINKAN =====================
+      if (posisiSaved != null && posisiSaved.isNotEmpty) {
+        posisi = posisiSaved;
+      }
     });
+  }
+
+  // ===================== PICK IMAGE FROM GALLERY & SAVE =====================
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      final path = picked.path;
+
+      // Simpan path ke data_diri (kolom foto_path)
+      await dbHelper.insertOrUpdateDataDiri({'foto_path': path});
+
+      setState(() {
+        profileImagePath = path;
+      });
+    } catch (e) {
+      // jangan crash — bisa log atau tampilkan snack
+      // print('pick image error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal memilih gambar')));
+    }
   }
 
   // ===================== UPDATE DATA =====================
@@ -201,7 +281,10 @@ class _ProfilPageState extends State<ProfilPage> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.blue[100],
-                  backgroundImage: const AssetImage('assets/profile.png'),
+                  backgroundImage:
+                      profileImagePath != null && profileImagePath!.isNotEmpty
+                      ? FileImage(File(profileImagePath!)) as ImageProvider
+                      : const AssetImage('assets/profile.png'),
                 ),
                 CircleAvatar(
                   radius: 16,
@@ -212,7 +295,8 @@ class _ProfilPageState extends State<ProfilPage> {
                       color: Colors.white,
                       size: 14,
                     ),
-                    onPressed: () {},
+                    // hanya galeri sesuai permintaan
+                    onPressed: _pickImageFromGallery,
                   ),
                 ),
               ],
@@ -241,7 +325,9 @@ class _ProfilPageState extends State<ProfilPage> {
                   ),
                 );
                 if (updatedData != null && updatedData['posisi'] != null) {
-                  _updatePosisi(updatedData['posisi']);
+                  final newPosisi = updatedData['posisi'];
+                  _updatePosisi(newPosisi);
+                  await dbHelper.insertOrUpdatePosisiDiinginkan(newPosisi);
                 }
               },
             ),
@@ -259,6 +345,10 @@ class _ProfilPageState extends State<ProfilPage> {
                 );
                 if (updatedData != null && updatedData['kota'] != null) {
                   _updateKota(updatedData['kota']);
+                  // simpan juga ke db agar persist
+                  await dbHelper.insertOrUpdateKotaDiinginkan(
+                    updatedData['kota'],
+                  );
                 }
               },
             ),
@@ -273,14 +363,7 @@ class _ProfilPageState extends State<ProfilPage> {
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
-              subtitle: kemampuanTeknis.isEmpty
-                  ? "Belum ditambahkan"
-                  : kemampuanTeknis
-                        .map(
-                          (k) =>
-                              "${k['kategori']} - ${k['nama']} (${k['tingkat']})",
-                        )
-                        .join("\n"),
+              subtitle: capabilityTeknisSubtitle(),
               isEdit: true,
               onTap: () async {
                 final result = await Navigator.push(
@@ -409,6 +492,13 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
+  String capabilityTeknisSubtitle() {
+    if (kemampuanTeknis.isEmpty) return "Belum ditambahkan";
+    return kemampuanTeknis
+        .map((k) => "${k['kategori']} - ${k['nama']} (${k['tingkat']})")
+        .join("\n");
+  }
+
   // ===================== WIDGET PEMBANTU =====================
   Widget _buildDataDiriCard(BuildContext context) => Card(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -451,7 +541,9 @@ class _ProfilPageState extends State<ProfilPage> {
                 );
                 if (updatedData != null &&
                     updatedData is Map<String, dynamic>) {
+                  // simpan ke db dari EditDataDiriPage sudah di-handle di page tersebut
                   _updateData(updatedData);
+                  await _loadAllData(); // sinkronkan ulang dari database
                 }
               },
             ),
@@ -479,7 +571,7 @@ class _ProfilPageState extends State<ProfilPage> {
                 return Text("$perusahaan - $posisi $tampilTahun");
               }).toList(),
             ),
-      trailing: const Icon(Icons.edit, color: Colors.blue),
+      trailing: const Icon(Icons.add, color: Colors.blue),
       onTap: () async {
         await Navigator.push(
           context,
@@ -514,7 +606,7 @@ class _ProfilPageState extends State<ProfilPage> {
                   )
                   .toList(),
             ),
-      trailing: const Icon(Icons.edit, color: Colors.blue),
+      trailing: const Icon(Icons.add, color: Colors.blue),
       onTap: () async {
         final result = await Navigator.push(
           context,
@@ -553,9 +645,21 @@ class _ProfilPageState extends State<ProfilPage> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      onPressed: () => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Berhasil keluar'))),
+      onPressed: () {
+        // Tampilkan notifikasi kecil (opsional)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Berhasil keluar')));
+
+        // Arahkan ke WelcomePage dan hapus semua route sebelumnya
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const WelcomePage()),
+            (Route<dynamic> route) => false,
+          );
+        });
+      },
       child: const Text("Keluar", style: TextStyle(color: Colors.white)),
     ),
   );

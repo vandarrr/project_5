@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../database/database_helper.dart';
 
 class KotaDiinginkanPage extends StatefulWidget {
   const KotaDiinginkanPage({Key? key}) : super(key: key);
@@ -12,64 +13,59 @@ class _KotaDiinginkanPageState extends State<KotaDiinginkanPage> {
   final TextEditingController kotaController = TextEditingController();
 
   @override
-  void dispose() {
-    kotaController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadExistingKota();
+  }
+
+  Future<void> _loadExistingKota() async {
+    final existingKota = await DatabaseHelper.instance.getKotaDiinginkan();
+    if (existingKota != null && existingKota.isNotEmpty) {
+      setState(() {
+        kotaController.text = existingKota;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Kota Diinginkan"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: const Text("Kota Diinginkan"), centerTitle: true),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Masukkan kota yang kamu inginkan untuk bekerja",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 12),
               TextFormField(
                 controller: kotaController,
-                decoration: InputDecoration(
-                  labelText: "Kota Diinginkan",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                decoration: const InputDecoration(
+                  labelText: "Masukkan kota diinginkan",
+                  border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Kota tidak boleh kosong";
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.isEmpty ? "Wajib diisi" : null,
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    backgroundColor: Colors.blue,
-                  ),
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      Navigator.pop(context, {'kota': kotaController.text});
-                    }
-                  },
-                  child: const Text(
-                    "Simpan",
-                    style: TextStyle(color: Colors.white),
-                  ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    // Simpan ke database
+                    await DatabaseHelper.instance.insertOrUpdateKotaDiinginkan(
+                      kotaController.text,
+                    );
+
+                    // Kembalikan data ke ProfilPage agar tampil langsung
+                    Navigator.pop(context, {'kota': kotaController.text});
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: Colors.blue,
+                ),
+                child: const Text(
+                  "Simpan",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ],

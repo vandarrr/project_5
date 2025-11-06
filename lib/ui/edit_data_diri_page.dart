@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../database/database_helper.dart'; // <— pastikan ini ditambahkan
 
 class EditDataDiriPage extends StatefulWidget {
   final String? nama;
@@ -151,15 +152,28 @@ class _EditDataDiriPageState extends State<EditDataDiriPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context, {
+                onPressed: () async {
+                  final updatedData = {
                     'nama': namaController.text,
                     'email': emailController.text,
                     'noHp': hpController.text,
                     'gender': jenisKelamin,
                     'tanggalLahir': tanggalLahirController.text,
                     'lokasi': lokasiController.text,
+                  };
+
+                  // Simpan ke database SQLite
+                  await DatabaseHelper.instance.insertOrUpdateDataDiri({
+                    'nama': updatedData['nama'],
+                    'email': updatedData['email'],
+                    'no_hp': updatedData['noHp'],
+                    'gender': updatedData['gender'],
+                    'tanggal_lahir': updatedData['tanggalLahir'],
+                    'lokasi': updatedData['lokasi'],
                   });
+
+                  // Kembalikan data ke ProfilPage
+                  Navigator.pop(context, updatedData);
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),

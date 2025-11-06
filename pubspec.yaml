@@ -24,6 +24,9 @@ dependencies:
   path: ^1.9.0
   intl: ^0.18.1
 
+  # ✅ Tambahkan ini untuk pilih foto dari galeri (fitur foto profil)
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -50,3 +53,7 @@ flutter:
     - assets/google1.png
     - assets/facebook1.png
     - assets/profile.png
+    - assets/bg_welcome.png
+    - assets/logo1.png
+    - assets/bg_welcome1.png
+    - assets/logo2.png
