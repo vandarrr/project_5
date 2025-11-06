@@ -105,9 +105,11 @@ class _ProfilPageState extends State<ProfilPage> {
           )
           .toList();
 
+      // ==== Tambahan sinkron kemampuan bahasa ====
       kemampuanBahasa = bah
           .map<Map<String, String>>(
             (e) => {
+              'id': (e['id'] ?? '').toString(),
               'bahasa': (e['bahasa'] ?? '').toString(),
               'tingkat': (e['tingkat'] ?? '').toString(),
             },
@@ -267,6 +269,7 @@ class _ProfilPageState extends State<ProfilPage> {
             _buildPendidikanCard(context),
             const SizedBox(height: 16),
 
+            // ==== KEMAMPUAN TEKNIS ====
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
@@ -312,6 +315,7 @@ class _ProfilPageState extends State<ProfilPage> {
               },
             ),
 
+            // ==== KEMAMPUAN BAHASA (BARU) ====
             _buildCard(
               icon: Icons.language_outlined,
               title: "Kemampuan Bahasa",
@@ -319,21 +323,21 @@ class _ProfilPageState extends State<ProfilPage> {
                   ? "Belum ditambahkan"
                   : kemampuanBahasa
                         .map((b) => "${b['bahasa']} (${b['tingkat']})")
-                        .join(", "),
+                        .join("\n"),
               isEdit: true,
               onTap: () async {
-                final result = await Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        KemampuanBahasaPage(bahasaSebelumnya: kemampuanBahasa),
+                    builder: (context) => KemampuanBahasaPage(
+                      bahasaSebelumnya: kemampuanBahasa,
+                      onUpdate: (newList) {
+                        _updateKemampuanBahasa(newList);
+                      },
+                    ),
                   ),
                 );
-                if (result != null && result['bahasa'] != null) {
-                  _updateKemampuanBahasa(
-                    List<Map<String, String>>.from(result['bahasa']),
-                  );
-                }
+                await _loadAllData();
               },
             ),
 

@@ -62,7 +62,7 @@ class _BerandaState extends State<Beranda> {
             FadeInDown(
               duration: const Duration(seconds: 1),
               child: const Text(
-                'Good evening, Rizky 👋',
+                'Welcome, Rizky 👋',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
