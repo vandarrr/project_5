@@ -3,7 +3,8 @@ import '../ui/beranda.dart';
 import '../ui/login.dart';
 import '../ui/lamaran_page.dart';
 import '../ui/welcome_page.dart';
-import '../ui/profil_page.dart'; // ✅ import halaman profil
+import '../ui/profil_page.dart';
+import '../ui/career_page.dart'; // ✅ tambahkan import CareerPage di sini
 
 class Sidebar extends StatelessWidget {
   const Sidebar({Key? key}) : super(key: key);
@@ -61,8 +62,13 @@ class Sidebar extends StatelessWidget {
               page: const Beranda(),
             ),
 
-            // 🔹 Career
-            _buildMenuItem(context, icon: Icons.work, text: "Career"),
+            // 🔹 Career (➡️ diarahkan ke CareerPage)
+            _buildMenuItem(
+              context,
+              icon: Icons.work,
+              text: "Career",
+              page: CareerPage(), // ✅ Tambahkan navigasi ke CareerPage
+            ),
 
             // 🔹 My Activity
             _buildMenuItem(
@@ -72,12 +78,12 @@ class Sidebar extends StatelessWidget {
               page: LamaranPage(selectedTab: "applied"),
             ),
 
-            // 🔹 Profile -> ProfilPage
+            // 🔹 Profile
             _buildMenuItem(
               context,
               icon: Icons.account_circle_outlined,
               text: "Profile",
-              page: const ProfilPage(), // ✅ arahkan ke halaman profil
+              page: const ProfilPage(),
             ),
 
             const Divider(thickness: 1, indent: 15, endIndent: 15),

@@ -16,16 +16,20 @@ dependencies:
   dio: ^5.6.0
   shared_preferences: ^2.3.2
 
-  # ✅ Tambahkan ini untuk fitur unggah file CV/dokumen
+  # ✅ Untuk unggah file CV/dokumen
   file_picker: ^8.0.0
 
-  # ✅ Tambahkan ini untuk database lokal SQLite
+  # ✅ Untuk database lokal SQLite
   sqflite: ^2.4.0
   path: ^1.9.0
   intl: ^0.18.1
 
-  # ✅ Tambahkan ini untuk pilih foto dari galeri (fitur foto profil)
+  # ✅ Untuk pilih foto dari galeri (fitur foto profil)
   image_picker: ^1.1.2
+
+  # ✅ Untuk memutar video (Career Page)
+  video_player: ^2.9.0
+  chewie: ^1.7.0
 
 dev_dependencies:
   flutter_test:
@@ -57,3 +61,43 @@ flutter:
     - assets/logo1.png
     - assets/bg_welcome1.png
     - assets/logo2.png
+    - assets/excel1.png
+    - assets/word.png
+    - assets/powerpoint.png
+    - assets/teams.png
+    - assets/sheets.png
+    - assets/canva.png
+    - assets/outlook.png
+    - assets/analyst.png
+    - assets/copilot.png
+    - assets/admin.png
+    - assets/cv.png
+    - assets/interview.png
+    - assets/etika.png
+    - assets/surat.png
+    - assets/nego.png
+    - assets/teamwork.png
+    - assets/comunnication.png
+    - assets/thinking.png
+    - assets/time.png
+    - assets/publicspeaking.png
+    - assets/videos/belajarexcel.mp4
+    - assets/videos/word.mp4
+    - assets/videos/powerpoint.mp4
+    - assets/videos/teams.mp4
+    - assets/videos/sheets.mp4
+    - assets/videos/canva.mp4
+    - assets/videos/outlook.mp4
+    - assets/videos/analyst.mp4
+    - assets/videos/copilot.mp4
+    - assets/videos/admin.mp4
+    - assets/videos/cv.mp4
+    - assets/videos/interview.mp4
+    - assets/videos/etika.mp4
+    - assets/videos/surat.mp4
+    - assets/videos/nego.mp4
+    - assets/videos/teamwork.mp4
+    - assets/videos/comunnication.mp4
+    - assets/videos/thinking.mp4
+    - assets/videos/time.mp4
+    - assets/videos/publicspeaking.mp4
