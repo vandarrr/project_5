@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'video_detail_page.dart';
 
 class SoftSkillsTab extends StatelessWidget {
-  const SoftSkillsTab({super.key});
+  final String searchQuery; //⬅ tambahan
+  const SoftSkillsTab({super.key, required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -54,17 +55,29 @@ class SoftSkillsTab extends StatelessWidget {
       },
     ];
 
+    final filtered = videos.where((v) {
+      return v['title']!.toLowerCase().contains(searchQuery.toLowerCase());
+    }).toList();
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: videos.length,
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final video = videos[index];
+        final video = filtered[index];
+        final originalIndex = videos.indexOf(video);
 
         return GestureDetector(
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => VideoDetailPage(video: video)),
+              MaterialPageRoute(
+                builder: (_) => VideoDetailPage(
+                  video: video,
+                  allVideos: videos,
+                  currentIndex: originalIndex,
+                  sourceTab: "Soft Skills",
+                ),
+              ),
             );
           },
           child: Card(
@@ -86,7 +99,6 @@ class SoftSkillsTab extends StatelessWidget {
                     width: double.infinity,
                   ),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(
@@ -106,7 +118,7 @@ class SoftSkillsTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Gratis Sertifikat 🎓',
+                        'Learning 🎓',
                         style: TextStyle(
                           color: Colors.purple,
                           fontWeight: FontWeight.w600,

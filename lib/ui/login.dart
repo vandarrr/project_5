@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../service/login_service.dart';
-import '/ui/beranda.dart';
 import '/ui/register_page.dart';
-import '/ui/welcome_page.dart'; // ✅ untuk kembali ke WelcomePage
+import '/ui/welcome_page.dart';
+import '../ui/main_navigation.dart'; // ✅ import MainNavigation
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -23,16 +23,13 @@ class _Login extends State<Login> {
       body: SafeArea(
         child: Stack(
           children: [
-            // 🔹 ScrollView berisi konten utama
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(
-                    height: 60,
-                  ), // beri jarak agar tidak menimpa tombol back
-                  // 🔹 Logo
+                  const SizedBox(height: 60),
+
                   Center(
                     child: Image.asset(
                       'assets/logo.png',
@@ -41,15 +38,15 @@ class _Login extends State<Login> {
                       fit: BoxFit.fitWidth,
                     ),
                   ),
-                  const SizedBox(height: 16),
 
+                  const SizedBox(height: 16),
                   const Text(
                     'Wujudkan Karirmu',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 30),
 
-                  // 🔹 Tombol Google
+                  // Tombol Google
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: Image.asset('assets/google.png', height: 20),
@@ -69,7 +66,6 @@ class _Login extends State<Login> {
 
                   const SizedBox(height: 12),
 
-                  // 🔹 Tombol Facebook
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: Image.asset('assets/facebook.png', height: 20),
@@ -102,7 +98,6 @@ class _Login extends State<Login> {
 
                   const SizedBox(height: 24),
 
-                  // 🔹 Input Email
                   TextField(
                     controller: _emailCtrl,
                     decoration: InputDecoration(
@@ -115,7 +110,6 @@ class _Login extends State<Login> {
 
                   const SizedBox(height: 16),
 
-                  // 🔹 Input Password
                   TextField(
                     controller: _passwordCtrl,
                     obscureText: !_isPasswordVisible,
@@ -139,22 +133,8 @@ class _Login extends State<Login> {
                     ),
                   ),
 
-                  const SizedBox(height: 8),
-
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(color: Colors.blue),
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 10),
 
-                  // 🔹 Tombol Login
                   ElevatedButton(
                     onPressed: () async {
                       String username = _emailCtrl.text;
@@ -170,24 +150,11 @@ class _Login extends State<Login> {
                           const SnackBar(content: Text('Login berhasil!')),
                         );
 
-                        Navigator.of(context).pushReplacement(
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    const Beranda(),
-                            transitionsBuilder:
-                                (
-                                  context,
-                                  animation,
-                                  secondaryAnimation,
-                                  child,
-                                ) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                            transitionDuration: const Duration(seconds: 2),
+                        // ⬇️⬇️⬇️ BAGIAN INI SUDAH DIUPDATE SESUAI PERMINTAAN ⬇️⬇️⬇️
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MainNavigation(),
                           ),
                         );
                       } else {
@@ -211,7 +178,6 @@ class _Login extends State<Login> {
 
                   const SizedBox(height: 20),
 
-                  // 🔹 Link ke register
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -248,7 +214,6 @@ class _Login extends State<Login> {
               ),
             ),
 
-            // 🔹 Tombol back di atas semua layer
             Positioned(
               top: 10,
               left: 10,
@@ -266,13 +231,9 @@ class _Login extends State<Login> {
                     padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white, // biar jelas terlihat
+                      color: Colors.white,
                     ),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black,
-                      size: 24,
-                    ),
+                    child: const Icon(Icons.arrow_back, color: Colors.black),
                   ),
                 ),
               ),

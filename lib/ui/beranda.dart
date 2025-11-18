@@ -42,7 +42,6 @@ class _BerandaState extends State<Beranda> {
     }
 
     return Scaffold(
-      drawer: const Sidebar(),
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A1D56),

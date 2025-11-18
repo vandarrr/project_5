@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'video_detail_page.dart';
 
 class SkillsTab extends StatelessWidget {
-  const SkillsTab({super.key});
+  final String searchQuery; // ⬅ Tambahan
+  const SkillsTab({super.key, required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 List video — tinggal tambah data baru ke sini aja
     final List<Map<String, String>> videos = [
       {
         'title': '25 Rumus Excel Paling Penting',
@@ -100,16 +100,31 @@ class SkillsTab extends StatelessWidget {
       },
     ];
 
+    // ⬇ FILTER VIDEO
+    final filtered = videos.where((v) {
+      final title = v['title']!.toLowerCase();
+      return title.contains(searchQuery.toLowerCase());
+    }).toList();
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: videos.length,
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final video = videos[index];
+        final video = filtered[index];
+        final originalIndex = videos.indexOf(video);
+
         return GestureDetector(
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => VideoDetailPage(video: video)),
+              MaterialPageRoute(
+                builder: (_) => VideoDetailPage(
+                  video: video,
+                  allVideos: videos,
+                  currentIndex: originalIndex,
+                  sourceTab: "Skills",
+                ),
+              ),
             );
           },
           child: Card(
@@ -151,7 +166,7 @@ class SkillsTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Gratis Sertifikat 🎓',
+                        'Learning 🎓',
                         style: TextStyle(
                           color: Colors.purple,
                           fontWeight: FontWeight.w600,

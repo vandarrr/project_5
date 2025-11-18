@@ -46,12 +46,11 @@ class _ProfilPageState extends State<ProfilPage> {
   List<Map<String, String>> kemampuanTeknis = [];
   List<Map<String, String>> kemampuanBahasa = [];
 
-  // path gambar profil (disimpan di db dalam kolom 'foto_path')
+  // path gambar profil
   String? profileImagePath;
 
   final ImagePicker _picker = ImagePicker();
 
-  // ===================== INIT LOAD FROM DATABASE =====================
   @override
   void initState() {
     super.initState();
@@ -72,7 +71,7 @@ class _ProfilPageState extends State<ProfilPage> {
     final dataDiri = await dbHelper.getDataDiri();
 
     setState(() {
-      // ===================== DATA DIRI =====================
+      // DATA DIRI
       if (dataDiri != null) {
         nama = (dataDiri['nama'] ?? nama).toString();
         email = (dataDiri['email'] ?? email).toString();
@@ -81,14 +80,13 @@ class _ProfilPageState extends State<ProfilPage> {
         tanggalLahir = (dataDiri['tanggal_lahir'] ?? tanggalLahir).toString();
         lokasi = (dataDiri['lokasi'] ?? lokasi).toString();
 
-        // foto profil (jika tersimpan)
         final foto = dataDiri['foto_path'];
         if (foto != null && foto.toString().isNotEmpty) {
           profileImagePath = foto.toString();
         }
       }
 
-      // ===================== PENGALAMAN KERJA =====================
+      // PENGALAMAN
       if (exp.isNotEmpty) {
         pengalamanKerja = exp
             .map<Map<String, String>>(
@@ -107,7 +105,7 @@ class _ProfilPageState extends State<ProfilPage> {
             .toList();
       }
 
-      // ===================== RIWAYAT PENDIDIKAN =====================
+      // PENDIDIKAN
       if (pend.isNotEmpty) {
         riwayatPendidikan = pend
             .map<Map<String, String>>(
@@ -126,7 +124,7 @@ class _ProfilPageState extends State<ProfilPage> {
             .toList();
       }
 
-      // ===================== KEMAMPUAN TEKNIS =====================
+      // KEMAMPUAN TEKNIS
       if (tek.isNotEmpty) {
         kemampuanTeknis = tek
             .map<Map<String, String>>(
@@ -146,7 +144,7 @@ class _ProfilPageState extends State<ProfilPage> {
             .toList();
       }
 
-      // ===================== KEMAMPUAN BAHASA =====================
+      // KEMAMPUAN BAHASA
       if (bah.isNotEmpty) {
         kemampuanBahasa = bah
             .map<Map<String, String>>(
@@ -160,7 +158,7 @@ class _ProfilPageState extends State<ProfilPage> {
             .toList();
       }
 
-      // ===================== DOKUMEN =====================
+      // DOKUMEN
       if (dok.isNotEmpty) {
         dokumenList = dok
             .map((e) => (e['path'] ?? '').toString())
@@ -168,24 +166,23 @@ class _ProfilPageState extends State<ProfilPage> {
             .toList();
       }
 
-      // ===================== CV =====================
+      // CV
       if (cv.isNotEmpty) {
         cvPath = cv.last['path'];
       }
 
-      // ===================== KOTA DIINGINKAN =====================
+      // KOTA
       if (kotaSaved != null && kotaSaved.isNotEmpty) {
         kota = kotaSaved;
       }
 
-      // ===================== POSISI DIINGINKAN =====================
+      // POSISI
       if (posisiSaved != null && posisiSaved.isNotEmpty) {
         posisi = posisiSaved;
       }
     });
   }
 
-  // ===================== PICK IMAGE FROM GALLERY & SAVE =====================
   Future<void> _pickImageFromGallery() async {
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery);
@@ -193,22 +190,18 @@ class _ProfilPageState extends State<ProfilPage> {
 
       final path = picked.path;
 
-      // Simpan path ke data_diri (kolom foto_path)
       await dbHelper.insertOrUpdateDataDiri({'foto_path': path});
 
       setState(() {
         profileImagePath = path;
       });
     } catch (e) {
-      // jangan crash — bisa log atau tampilkan snack
-      // print('pick image error: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Gagal memilih gambar')));
     }
   }
 
-  // ===================== UPDATE DATA =====================
   void _updateData(Map<String, dynamic> newData) {
     setState(() {
       nama = newData['nama'] ?? nama;
@@ -234,7 +227,7 @@ class _ProfilPageState extends State<ProfilPage> {
   void _updateDokumen(List<String> newList) =>
       setState(() => dokumenList = newList);
 
-  // ===================== BUILD CARD MENU =====================
+  // CARD BUILDER
   Widget _buildCard({
     required IconData icon,
     required String title,
@@ -258,7 +251,6 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
-  // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -283,8 +275,8 @@ class _ProfilPageState extends State<ProfilPage> {
                   backgroundColor: Colors.blue[100],
                   backgroundImage:
                       profileImagePath != null && profileImagePath!.isNotEmpty
-                      ? FileImage(File(profileImagePath!)) as ImageProvider
-                      : const AssetImage('assets/profile.png'),
+                      ? FileImage(File(profileImagePath!))
+                      : const AssetImage('assets/profile.png') as ImageProvider,
                 ),
                 CircleAvatar(
                   radius: 16,
@@ -295,20 +287,20 @@ class _ProfilPageState extends State<ProfilPage> {
                       color: Colors.white,
                       size: 14,
                     ),
-                    // hanya galeri sesuai permintaan
                     onPressed: _pickImageFromGallery,
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
             Text(
               nama,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(userId, style: const TextStyle(color: Colors.blue)),
-            const SizedBox(height: 16),
 
+            const SizedBox(height: 16),
             _buildDataDiriCard(context),
             const SizedBox(height: 16),
 
@@ -331,6 +323,7 @@ class _ProfilPageState extends State<ProfilPage> {
                 }
               },
             ),
+
             _buildCard(
               icon: Icons.location_city_outlined,
               title: "Kota Diinginkan",
@@ -345,7 +338,6 @@ class _ProfilPageState extends State<ProfilPage> {
                 );
                 if (updatedData != null && updatedData['kota'] != null) {
                   _updateKota(updatedData['kota']);
-                  // simpan juga ke db agar persist
                   await dbHelper.insertOrUpdateKotaDiinginkan(
                     updatedData['kota'],
                   );
@@ -359,7 +351,6 @@ class _ProfilPageState extends State<ProfilPage> {
             _buildPendidikanCard(context),
             const SizedBox(height: 16),
 
-            // ==== KEMAMPUAN TEKNIS ====
             _buildCard(
               icon: Icons.engineering_outlined,
               title: "Kemampuan Teknis",
@@ -380,6 +371,7 @@ class _ProfilPageState extends State<ProfilPage> {
 
                 if (result is Map && result.containsKey('kemampuan')) {
                   final kemampuanBaru = result['kemampuan'];
+
                   if (kemampuanBaru is List) {
                     _updateKemampuanTeknis(
                       List<Map<String, String>>.from(
@@ -393,12 +385,12 @@ class _ProfilPageState extends State<ProfilPage> {
                       ),
                     );
                   }
+
                   await _loadAllData();
                 }
               },
             ),
 
-            // ==== KEMAMPUAN BAHASA (BARU) ====
             _buildCard(
               icon: Icons.language_outlined,
               title: "Kemampuan Bahasa",
@@ -420,6 +412,7 @@ class _ProfilPageState extends State<ProfilPage> {
                     ),
                   ),
                 );
+
                 await _loadAllData();
               },
             ),
@@ -488,7 +481,6 @@ class _ProfilPageState extends State<ProfilPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
@@ -541,9 +533,8 @@ class _ProfilPageState extends State<ProfilPage> {
                 );
                 if (updatedData != null &&
                     updatedData is Map<String, dynamic>) {
-                  // simpan ke db dari EditDataDiriPage sudah di-handle di page tersebut
                   _updateData(updatedData);
-                  await _loadAllData(); // sinkronkan ulang dari database
+                  await _loadAllData();
                 }
               },
             ),
@@ -646,12 +637,10 @@ class _ProfilPageState extends State<ProfilPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       onPressed: () {
-        // Tampilkan notifikasi kecil (opsional)
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Berhasil keluar')));
 
-        // Arahkan ke WelcomePage dan hapus semua route sebelumnya
         Future.delayed(const Duration(milliseconds: 500), () {
           Navigator.pushAndRemoveUntil(
             context,
@@ -663,31 +652,4 @@ class _ProfilPageState extends State<ProfilPage> {
       child: const Text("Keluar", style: TextStyle(color: Colors.white)),
     ),
   );
-
-  BottomNavigationBar _buildBottomNav(BuildContext context) =>
-      BottomNavigationBar(
-        currentIndex: 3,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline),
-            label: "Lowongan",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            label: "Riwayat",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_2_outlined),
-            label: "Walk In",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profil",
-          ),
-        ],
-        onTap: (index) {},
-      );
 }
