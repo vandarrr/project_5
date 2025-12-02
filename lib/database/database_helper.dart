@@ -103,7 +103,8 @@ class DatabaseHelper {
     no_hp TEXT,
     gender TEXT,
     tanggal_lahir TEXT,
-    lokasi TEXT
+    lokasi TEXT,
+    foto_path TEXT
   )
 ''');
   }
@@ -147,6 +148,16 @@ class DatabaseHelper {
     return await db.query('pengalaman_kerja', orderBy: 'id DESC');
   }
 
+  Future<int> updatePengalaman(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update(
+      'pengalaman_kerja',
+      data,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<int> deletePengalaman(int id) async {
     final db = await instance.database;
     return await db.delete(
@@ -165,6 +176,16 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getAllPendidikan() async {
     final db = await instance.database;
     return await db.query('riwayat_pendidikan', orderBy: 'id DESC');
+  }
+
+  Future<int> updatePendidikan(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update(
+      'riwayat_pendidikan',
+      data,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<int> deletePendidikan(int id) async {
@@ -232,6 +253,16 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getAllKemampuanBahasa() async {
     final db = await instance.database;
     return await db.query('kemampuan_bahasa', orderBy: 'id DESC');
+  }
+
+  Future<int> updateKemampuanBahasa(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update(
+      'kemampuan_bahasa',
+      data,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<int> deleteKemampuanBahasa(int id) async {

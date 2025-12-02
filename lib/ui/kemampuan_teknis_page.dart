@@ -27,14 +27,14 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
     _loadKemampuan();
   }
 
-  // Load semua kemampuan dari database
+  // Load kemampuan teknis
   Future<void> _loadKemampuan() async {
     final data = await dbHelper.getAllKemampuanTeknis();
     setState(() {
       kemampuanList = data;
     });
 
-    // Update ProfilPage jika callback tersedia
+    // Kirim data ke ProfilPage jika ada callback
     if (widget.onUpdate != null) {
       widget.onUpdate!(
         kemampuanList
@@ -55,24 +55,20 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
 
       try {
         await dbHelper.insertKemampuanTeknis(data);
-
-        // Reload list agar sinkron dengan database
         await _loadKemampuan();
 
-        // Clear form
+        // Bersihkan input
         namaController.clear();
         kategoriController.clear();
         tingkatController.clear();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Kemampuan teknis berhasil ditambahkan"),
-          ),
+          const SnackBar(content: Text("Kemampuan teknis ditambahkan")),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal menambahkan kemampuan: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal: $e")));
       }
     }
   }
@@ -82,12 +78,80 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
     await dbHelper.deleteKemampuanTeknis(id);
     await _loadKemampuan();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Kemampuan teknis berhasil dihapus")),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Kemampuan teknis dihapus")));
+  }
+
+  // ------------------------------
+  //       FUNGSI EDIT (UPDATE)
+  // ------------------------------
+  void _editKemampuan(Map<String, dynamic> item) {
+    final TextEditingController editNama = TextEditingController(
+      text: item['nama'],
+    );
+    final TextEditingController editKategori = TextEditingController(
+      text: item['kategori'],
+    );
+    final TextEditingController editTingkat = TextEditingController(
+      text: item['tingkat'],
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Kemampuan"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: editNama,
+                decoration: const InputDecoration(labelText: "Nama Kemampuan"),
+              ),
+              TextField(
+                controller: editKategori,
+                decoration: const InputDecoration(
+                  labelText: "Kategori / Bidang",
+                ),
+              ),
+              TextField(
+                controller: editTingkat,
+                decoration: const InputDecoration(
+                  labelText: "Tingkat Keahlian",
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Batal"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              child: const Text("Simpan"),
+              onPressed: () async {
+                await dbHelper.updateKemampuanTeknis(item['id'], {
+                  'nama': editNama.text,
+                  'kategori': editKategori.text,
+                  'tingkat': editTingkat.text,
+                });
+
+                Navigator.pop(context);
+                _loadKemampuan();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Kemampuan teknis diperbarui")),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // Simpan semua dan kembali ke ProfilPage
+  // Simpan dan kembali
   void _simpanSemua() {
     final updatedList = kemampuanList
         .map((e) => e.map((k, v) => MapEntry(k, v.toString())))
@@ -132,6 +196,7 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Input Form
             Form(
               key: _formKey,
               child: Column(
@@ -142,27 +207,26 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
+
                   _judul("Nama Kemampuan"),
                   TextFormField(
                     controller: namaController,
-                    decoration: _inputDecoration(
-                      "Contoh: Photoshop, Flutter, Excel",
-                    ),
+                    decoration: _inputDecoration("Contoh: Photoshop, Flutter"),
                     validator: (v) => v == null || v.isEmpty
                         ? "Nama kemampuan wajib diisi"
                         : null,
                   ),
                   const SizedBox(height: 16),
+
                   _judul("Kategori / Bidang"),
                   TextFormField(
                     controller: kategoriController,
-                    decoration: _inputDecoration(
-                      "Contoh: Desain, Coding, Administrasi",
-                    ),
+                    decoration: _inputDecoration("Contoh: Coding, Desain"),
                     validator: (v) =>
                         v == null || v.isEmpty ? "Kategori wajib diisi" : null,
                   ),
                   const SizedBox(height: 16),
+
                   _judul("Tingkat Keahlian"),
                   TextFormField(
                     controller: tingkatController,
@@ -173,6 +237,7 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
                         ? "Tingkat keahlian wajib diisi"
                         : null,
                   ),
+
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -194,27 +259,28 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
                 ],
               ),
             ),
+
             const SizedBox(height: 30),
             const Text(
               "Daftar Kemampuan Teknis",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 10),
+
             kemampuanList.isEmpty
                 ? const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20),
                       child: Text(
-                        "Belum ada kemampuan teknis yang ditambahkan.",
+                        "Belum ada kemampuan teknis.",
                         style: TextStyle(color: Colors.grey),
                       ),
                     ),
                   )
                 : Column(
                     children: kemampuanList.map((k) {
-                      final id = k['id'] is int
-                          ? k['id']
-                          : int.tryParse(k['id'].toString());
+                      final id = int.tryParse(k['id'].toString()) ?? 0;
+
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
@@ -239,11 +305,28 @@ class _KemampuanTeknisPageState extends State<KemampuanTeknisPage> {
                               ),
                             ],
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: id != null
-                                ? () => _hapusKemampuan(id)
-                                : null,
+
+                          // ------------------
+                          // EDIT + DELETE
+                          // ------------------
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () => _editKemampuan(k),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _hapusKemampuan(id),
+                              ),
+                            ],
                           ),
                         ),
                       );

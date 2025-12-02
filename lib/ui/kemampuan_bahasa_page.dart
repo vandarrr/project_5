@@ -24,6 +24,7 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
     'Profesional',
   ];
   String? tingkatKemampuan;
+
   List<Map<String, dynamic>> kemampuanBahasaList = [];
   final dbHelper = DatabaseHelper.instance;
 
@@ -33,11 +34,9 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
     _loadKemampuanBahasa();
   }
 
-  // --- Ambil semua data dari database
   Future<void> _loadKemampuanBahasa() async {
     final data = await dbHelper.getAllKemampuanBahasa();
 
-    // Gabungkan dengan data sebelumnya (profil)
     final allData = {
       for (var item in data) item['id']: item,
       for (var e in widget.bahasaSebelumnya)
@@ -53,7 +52,6 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
     });
   }
 
-  // --- Tambah kemampuan bahasa baru (langsung tampil)
   Future<void> _addKemampuanBahasa() async {
     final bahasa = bahasaController.text.trim();
     final tingkat = tingkatKemampuan ?? "";
@@ -65,49 +63,35 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
       return;
     }
 
-    // Simpan ke database
     final id = await dbHelper.insertKemampuanBahasa({
       'bahasa': bahasa,
       'tingkat': tingkat,
     });
 
-    // Tambahkan langsung ke daftar
     final newItem = {'id': id, 'bahasa': bahasa, 'tingkat': tingkat};
 
     setState(() {
-      kemampuanBahasaList.insert(0, newItem); // langsung muncul di atas
+      kemampuanBahasaList.insert(0, newItem);
     });
 
-    // Bersihkan input
     bahasaController.clear();
-    setState(() => tingkatKemampuan = null);
+    setState(() {
+      tingkatKemampuan = null;
+    });
 
-    // Notifikasi
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Kemampuan bahasa berhasil ditambahkan.")),
     );
 
-    // Sinkronkan ke profil
-    widget.onUpdate(
-      kemampuanBahasaList
-          .map(
-            (e) => {
-              'bahasa': e['bahasa'].toString(),
-              'tingkat': e['tingkat'].toString(),
-            },
-          )
-          .toList(),
-    );
+    widget.onUpdate(_convertList());
   }
 
-  // --- Hapus data kemampuan bahasa
   Future<void> _deleteKemampuanBahasa(int id) async {
     await dbHelper.deleteKemampuanBahasa(id);
 
     setState(() {
       kemampuanBahasaList.removeWhere((item) {
-        final itemId = int.tryParse(item['id'].toString()) ?? 0;
-        return itemId == id;
+        return (item['id'] as int) == id;
       });
     });
 
@@ -115,44 +99,88 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
       context,
     ).showSnackBar(const SnackBar(content: Text("Kemampuan bahasa dihapus.")));
 
-    // Sinkronkan perubahan
-    widget.onUpdate(
-      kemampuanBahasaList
-          .map(
-            (e) => {
-              'bahasa': e['bahasa'].toString(),
-              'tingkat': e['tingkat'].toString(),
-            },
-          )
-          .toList(),
+    widget.onUpdate(_convertList());
+  }
+
+  // ================================
+  //          ✨ FUNGSI EDIT
+  // ================================
+  void _editKemampuanBahasa(Map<String, dynamic> item) {
+    final TextEditingController editBahasaController = TextEditingController(
+      text: item['bahasa'],
+    );
+
+    String? editTingkat = item['tingkat'];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Kemampuan Bahasa"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: editBahasaController,
+                decoration: const InputDecoration(labelText: "Bahasa"),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: editTingkat,
+                decoration: const InputDecoration(labelText: "Tingkat"),
+                items: tingkatKemampuanList.map((value) {
+                  return DropdownMenuItem(value: value, child: Text(value));
+                }).toList(),
+                onChanged: (value) {
+                  editTingkat = value;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Batal"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              child: const Text("Simpan"),
+              onPressed: () async {
+                await dbHelper.updateKemampuanBahasa(item['id'], {
+                  'bahasa': editBahasaController.text,
+                  'tingkat': editTingkat,
+                });
+
+                Navigator.pop(context);
+
+                await _loadKemampuanBahasa();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Kemampuan bahasa berhasil diperbarui."),
+                  ),
+                );
+
+                widget.onUpdate(_convertList());
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // --- Simpan semua perubahan dan kembali
+  List<Map<String, String>> _convertList() {
+    return kemampuanBahasaList.map((e) {
+      return {
+        'bahasa': e['bahasa'].toString(),
+        'tingkat': e['tingkat'].toString(),
+      };
+    }).toList();
+  }
+
   void _saveAndReturn() {
-    widget.onUpdate(
-      kemampuanBahasaList
-          .map(
-            (e) => {
-              'bahasa': e['bahasa'].toString(),
-              'tingkat': e['tingkat'].toString(),
-            },
-          )
-          .toList(),
-    );
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Perubahan disimpan.")));
-
+    widget.onUpdate(_convertList());
     Navigator.pop(context);
-  }
-
-  void _clearForm() {
-    bahasaController.clear();
-    setState(() {
-      tingkatKemampuan = null;
-    });
   }
 
   @override
@@ -174,7 +202,6 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Input Bahasa ---
             const Text("Bahasa", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
@@ -193,8 +220,6 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // --- Dropdown Tingkat Kemampuan ---
             const Text(
               "Tingkat Kemampuan",
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -205,30 +230,23 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade400),
+                border: Border.all(color: Colors.grey),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: tingkatKemampuan,
                   hint: const Text("Pilih tingkat kemampuan"),
                   isExpanded: true,
-                  items: tingkatKemampuanList.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
+                  items: tingkatKemampuanList.map((value) {
+                    return DropdownMenuItem(value: value, child: Text(value));
                   }).toList(),
                   onChanged: (value) {
-                    setState(() {
-                      tingkatKemampuan = value;
-                    });
+                    setState(() => tingkatKemampuan = value);
                   },
                 ),
               ),
             ),
             const SizedBox(height: 24),
-
-            // --- Tombol Tambah ---
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -247,8 +265,6 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // --- List Data ---
             if (kemampuanBahasaList.isNotEmpty) ...[
               const Text(
                 "Daftar Kemampuan Bahasa",
@@ -261,24 +277,28 @@ class _KemampuanBahasaPageState extends State<KemampuanBahasaPage> {
                 itemCount: kemampuanBahasaList.length,
                 itemBuilder: (context, index) {
                   final item = kemampuanBahasaList[index];
-                  final id = int.tryParse(item['id'].toString()) ?? 0;
                   return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     child: ListTile(
-                      title: Text(item['bahasa'] ?? '-'),
-                      subtitle: Text(item['tingkat'] ?? '-'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteKemampuanBahasa(id),
+                      title: Text(item['bahasa']),
+                      subtitle: Text(item['tingkat']),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editKemampuanBahasa(item),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteKemampuanBahasa(item['id']),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 },
               ),
-            ] else
-              const Text("Belum ada kemampuan bahasa yang ditambahkan."),
+            ],
           ],
         ),
       ),
